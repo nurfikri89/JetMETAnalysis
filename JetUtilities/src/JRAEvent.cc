@@ -335,6 +335,20 @@ void JRAEvent::clear()
    ntrks_lowpt->clear();
    ntrks_highpt->clear();
    rhos->clear();
+   rho = 0.;
+   rho_hlt = 0.;
+   pthat = 0.;
+   beta = 0.;
+   betaStar = 0.;
+   weight = 0.;
+   refpvz = 0.;
+   pudensity = 0.;
+   gpudensity = 0.;
+   npv = 0;
+   run = 0;
+   lumi = 0;
+   evt = 0;
+   nref = 0;
    refrank->clear();
    if(!flags.test(0) || (flags.test(0) && flags.test(2))) {
       refpdgid->clear();
