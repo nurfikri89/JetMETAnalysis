@@ -2,7 +2,7 @@
 
 GenJet::GenJet(const Jet & jet,
 	       Int_t partonFlavour,
-	       UInt_t hadronFlavour)
+	       UChar_t hadronFlavour)
   : Jet(jet)
   , partonFlavour_(partonFlavour)
   , hadronFlavour_(hadronFlavour)
@@ -14,7 +14,7 @@ GenJet::partonFlavour() const
   return partonFlavour_;
 }
  
-UInt_t 
+UChar_t
 GenJet::hadronFlavour() const
 {
   return hadronFlavour_;
@@ -25,8 +25,7 @@ operator<<(std::ostream & stream,
            const GenJet & jet)
 { 
   stream << static_cast<const Jet &>(jet)             << ","
-            "partonFlavour = " << jet.partonFlavour() << ","
-            "hadronFlavour = " << jet.hadronFlavour();
-  stream << '\n';
+            " partonFlavour = " << jet.partonFlavour() << ","
+            " hadronFlavour = " << jet.hadronFlavour() << "\n";
   return stream;
 }

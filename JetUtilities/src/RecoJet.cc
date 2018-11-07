@@ -18,12 +18,13 @@ RecoJet::RecoJet(const Jet & jet,
   , chEmEF_(chEmEF)
   , neEmEF_(neEmEF)
   , jetId_(jetId)
+  , genJet_(nullptr)
 {}
 
 void
 RecoJet::set_genJet(const GenJet * genJet)
 {
-  genJet_.reset(genJet);
+  genJet_ = genJet;
 }
 
 Float_t 
@@ -71,7 +72,7 @@ RecoJet::jetId() const
 const GenJet *
 RecoJet::genJet() const
 {
-  return genJet_.get();
+  return genJet_;
 }
 
 std::ostream &
@@ -79,19 +80,17 @@ operator<<(std::ostream & stream,
            const RecoJet & jet)
 { 
   stream << static_cast<const Jet &>(jet)             << ","
-            "area = " << jet.area()                   << ","
-            "rawFactor = " << jet.rawFactor()         << ","
-            "chHEF = " << jet.chHEF()                 << ","
-            "neHEF = " << jet.neHEF()                 << ","
-            "chEmEF = " << jet.chEmEF()               << ","
-            "neEmEF = " << jet.neEmEF()               << ","   
-            "jetId = " << jet.jetId()                 << "\n";
-  stream << "gen. matching:\n";
-  stream << " jet = " << jet.genJet();
+            " area = " << jet.area()                   << ","
+            " rawFactor = " << jet.rawFactor()         << ","
+            " chHEF = " << jet.chHEF()                 << ","
+            " neHEF = " << jet.neHEF()                 << ","
+            " chEmEF = " << jet.chEmEF()               << ","
+            " neEmEF = " << jet.neEmEF()               << ","   
+            " jetId = " << jet.jetId()                 << "\n";
   if(jet.genJet())
   {
-    stream << ": " << *(jet.genJet());
+    stream << "matched to generator-level jet:\n";
+    stream << (*jet.genJet());
   } 
-  stream << '\n';
   return stream;
 }

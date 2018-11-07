@@ -12,8 +12,6 @@
 
 #include "JetMETAnalysis/JetUtilities/interface/Jet.h" // Jet
 
-#include <memory> // std::shared_ptr<>
-
 // forward declarations
 class GenJet;
 
@@ -63,7 +61,7 @@ class RecoJet
   Float_t neEmEF_;    ///< neutral Electromagnetic Energy Fraction
   Int_t jetId_;       ///< jet ID, as explained in https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017
 
-  std::shared_ptr<const GenJet> genJet_; ///< matching to generator-level jet  
+  const GenJet* genJet_; ///< matching to generator-level jet  
 };
 
 std::ostream &
