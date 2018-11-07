@@ -10,7 +10,7 @@ process.fwliteInput = cms.PSet(
 )
 
 process.fwliteOutput = cms.PSet(
-    fileName = cms.string('')
+    fileName = cms.string('jet_ntuple_filler.root')
 )
 
 process.jet_ntuple_filler = cms.PSet(
@@ -18,13 +18,13 @@ process.jet_ntuple_filler = cms.PSet(
 
     src_recJets = cms.string('Jet'),
     src_genJets = cms.string('GenJet'),
-    src_numPU = cms.string('nPU'),
-    src_numPU_true = cms.string('nTrueInt'),
+    src_numPU = cms.string('Pileup_nPU'),
+    src_numPU_true = cms.string('Pileup_nTrueInt'),
     src_numVertices = cms.string('PV_npvs'),
     src_vertexZ = cms.string('PV_z'),
     src_rho = cms.string('fixedGridRhoFastjetAll'),
-    src_weight = cms.string('weight'),
-    src_pThat = cms.string('binvar'),
+    src_weight = cms.string('Generator_weight'),
+    src_pThat = cms.string('Generator_binvar'),
     
     dR_match = cms.double(0.25),
 
@@ -34,7 +34,7 @@ process.jet_ntuple_filler = cms.PSet(
     #  - 'l2l3'   (L2Relative+L3Absolute)
     #  - 'l1l2l3' (L1Fastjet+L2Relative+L3Absolute)
     #  - ''       (no jet energy corrections applied)
-    jetCorrectionLevels = cms.string(''),
+    jetCorrectionLevels = cms.string('l1'),
     jecFilePath = cms.string('JetMETAnalysis/JetAnalyzers/data/JEC_Fall17_17Nov2017_V8_MC/'),
     jecFileName_l1 = cms.string('Fall17_17Nov2017_V8_MC_L1FastJet_AK4PFchs.txt'),
     jecFileName_l2 = cms.string('Fall17_17Nov2017_V8_MC_L2Relative_AK4PFchs.txt'),
@@ -56,5 +56,12 @@ process.jet_ntuple_filler = cms.PSet(
     outputTree_flags = cms.uint32(69),
 
     # Flag to enable (True) or disable (False) debug output
-    isDEBUG = cms.bool(True)
+    isDEBUG = cms.bool(False)
 )
+
+process.fwliteInput.fileNames = cms.vstring(
+    "file:/hdfs/cms/store/user/kaehatah/NanoProduction_v2_2018Jun08/QCD_Pt_170to250_bcToE_TuneCP5_13TeV_pythia8/NanoProduction_v2_2018Jun08_QCD_Pt_170to250_bcToE_TuneCP5_13TeV_pythia8__RunIIFall17MiniAOD-94X_mc2017_realistic_v11-v1/180608_194305/0000/tree_99.root"
+)
+#process.fwliteInput.outputEvery = cms.uint32(1)
+#process.fwliteInput.maxEvents = cms.int32(100)
+#process.jet_ntuple_filler.isDEBUG = cms.bool(True)

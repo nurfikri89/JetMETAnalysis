@@ -48,6 +48,16 @@ JetCorrectorParameters loadJetCorrPar(const std::string& jecFilePath, const std:
   return jetCorrPar;
 }
 
+template <typename T1, typename T2>
+void fillBranch(std::vector<T1>* branch, const T2& value)
+{
+  // CV: fill branches which may or may not exist in JRAEvent
+  //    (depending on bitset passed to constructor of JRAEvent)
+  if ( branch ) {
+    branch->push_back(value);
+  }
+}
+
 int main(int argc, char* argv[])
 {
 //--- throw an exception in case ROOT encounters an error
@@ -72,7 +82,7 @@ int main(int argc, char* argv[])
 
   edm::ParameterSet cfg = edm::readPSetsFrom(argv[1])->getParameter<edm::ParameterSet>("process");
 
-  edm::ParameterSet cfg_jet_ntuple_filler = cfg.getParameter<edm::ParameterSet>("jet_ntuple_fille");
+  edm::ParameterSet cfg_jet_ntuple_filler = cfg.getParameter<edm::ParameterSet>("jet_ntuple_filler");
 
   std::string inputTreeName = cfg_jet_ntuple_filler.getParameter<std::string>("inputTreeName");
 
@@ -143,9 +153,10 @@ int main(int argc, char* argv[])
   std::bitset<8> outputTree_flags = cfg_jet_ntuple_filler.getParameter<unsigned>("outputTree_flags");
   JRAEvent* outputTree_event = new JRAEvent(outputTree, outputTree_flags);
 
-  int analyzedEntries = 0;
-  int selectedEntries = 0;
-  double selectedEntries_weighted = 0.;
+  int analyzedEvents = 0;
+  double analyzedEvents_weighted = 0;
+  int selectedJets = 0;
+  double selectedJets_weighted = 0;
   while ( inputTree->hasNextEvent() ) {
 
     EventInfo evtInfo = evtInfoReader->read();
@@ -154,9 +165,10 @@ int main(int argc, char* argv[])
       std::cout << "processing Entry " << inputTree->getCurrentMaxEventIdx()
                 << " or " << inputTree->getCurrentEventIdx() << " entry in #" << (inputTree->getProcessedFileCount() - 1)
                 << " (run = " << evtInfo.run() << ", ls = " << evtInfo.lumi() << ", event = " << evtInfo.event() << ")"
-                << " file (" << selectedEntries << " Entries selected)\n";
+                << " file (" << selectedJets << " jets selected)\n";
     }
-    ++analyzedEntries;
+    ++analyzedEvents;
+    analyzedEvents_weighted += evtInfo.weight();
 
     std::vector<RecoJet> recJets = recJetReader->read();
     std::vector<GenJet> genJets = genJetReader->read();
@@ -182,25 +194,35 @@ int main(int argc, char* argv[])
 	  recJet != recJets.end(); ++recJet ) {
       const GenJet* genJet = recJet->genJet();
       if ( !genJet ) continue;
-           
+
       double sf = 1. - recJet->rawFactor();
-      Jet::LorentzVector recJetP4_raw(sf*recJet->pt(), recJet->eta(), recJet->phi(), sf*recJet->mass());
-      assert(std::fabs(recJetP4_raw.eta() - recJet->eta()) < 1.e-2);
-      assert(std::fabs(recJetP4_raw.phi() - recJet->phi()) < 1.e-2);
+      if ( sf <= 1.e-3 ) {
+	std::cout << "Warning: raw jet energy = " << sf*recJet->p4().energy() 
+		  << " --> skipping jet with zero or negative energy !!" << std::endl;
+	continue;
+      }
+      Jet::LorentzVector recJetP4_uncorr(sf*recJet->pt(), recJet->eta(), recJet->phi(), sf*recJet->mass());
+      assert(std::fabs(recJetP4_uncorr.eta() - recJet->eta()) < 1.e-2);
+      assert(std::fabs(deltaPhi(recJetP4_uncorr.phi(), recJet->phi())) < 1.e-2);
+
+      if ( isDEBUG ) {
+	std::cout << "reconstructed jet #" << numRecJets_selected << ":" << std::endl;
+	std::cout << (*recJet);
+	std::cout << std::endl;
+      }
 
       double jec = 1.;
       if ( jetCorrector ) {
-	jetCorrector->setJetEta(recJetP4_raw.eta());
-	jetCorrector->setJetPt(recJetP4_raw.pt());
+	jetCorrector->setJetEta(recJetP4_uncorr.eta());
+	jetCorrector->setJetPt(recJetP4_uncorr.pt());
 	jetCorrector->setJetA(recJet->area());
 	jetCorrector->setRho(evtInfo.rho());
 	jec = jetCorrector->getCorrection();
 	if ( isDEBUG ) {
-	  std::cout << "jet #" << numRecJets_selected << ":" 
-		    << " calibrated pT = " << recJet->pt() << ", raw pT = " << recJetP4_raw.pt() << "," 
-		    << " eta = " << recJet->eta() << ", phi = " << recJet->phi() << "," 
-		    << " jec(" << jetCorrectionLevels << ") = " << jec << std::endl;
+	  std::cout << "ratio of old/new JEC scale factor = " << (recJet->pt()/recJetP4_uncorr.pt())/jec << std::endl;
+	  std::cout << std::endl;
 	}
+	recJetP4_uncorr = Jet::LorentzVector(sf*recJet->pt()*jec, recJet->eta(), recJet->phi(), sf*recJet->mass()*jec);
       }
 
       outputTree_event->refrank->push_back(numRecJets_selected);
@@ -212,44 +234,43 @@ int main(int argc, char* argv[])
       outputTree_event->refeta->push_back(genJet->eta());
       outputTree_event->refphi->push_back(genJet->phi());
       outputTree_event->refy->push_back(genJet->p4().Rapidity());
-      outputTree_event->refdphijt->push_back(deltaPhi(genJet->phi(), recJet->phi()));
-      outputTree_event->refdrjt->push_back(deltaR(genJet->eta(), genJet->phi(), recJet->eta(), recJet->phi()));
+      fillBranch(outputTree_event->refdphijt, deltaPhi(genJet->phi(), recJet->phi()));   
+      fillBranch(outputTree_event->refdrjt, deltaR(genJet->eta(), genJet->phi(), recJet->eta(), recJet->phi()));
       outputTree_event->refarea->push_back(0.); // not available in nanoAOD 
-      outputTree_event->jte->push_back(recJetP4_raw.energy());
-      outputTree_event->jtpt->push_back(recJetP4_raw.pt());
-      outputTree_event->jteta->push_back(recJetP4_raw.eta());
-      outputTree_event->jtphi->push_back(recJetP4_raw.phi());
-      outputTree_event->jty->push_back(recJetP4_raw.Rapidity());
+      outputTree_event->jte->push_back(recJetP4_uncorr.energy());
+      outputTree_event->jtpt->push_back(recJetP4_uncorr.pt());
+      outputTree_event->jteta->push_back(recJetP4_uncorr.eta());
+      outputTree_event->jtphi->push_back(recJetP4_uncorr.phi());
+      outputTree_event->jty->push_back(recJetP4_uncorr.Rapidity());
       outputTree_event->jtjec->push_back(jec);
       outputTree_event->jtarea->push_back(recJet->area());
-      outputTree_event->jtemf->push_back(0.); // not available in nanoAOD 
-      outputTree_event->jtchf->push_back(recJet->chHEF());
-      outputTree_event->jtnhf->push_back(recJet->neHEF());
-      outputTree_event->jtnef->push_back(recJet->neEmEF());
-      outputTree_event->jtcef->push_back(recJet->chEmEF());
-      outputTree_event->jtmuf->push_back(0.); // not available in nanoAOD 
-      outputTree_event->jthfhf->push_back(0.); // not available in nanoAOD
-      outputTree_event->jthfef->push_back(0.); // not available in nanoAOD
- 
+      fillBranch(outputTree_event->jtemf, 0.); // value not available in nanoAOD 
+      fillBranch(outputTree_event->jtchf, recJet->chHEF());
+      fillBranch(outputTree_event->jtnhf, recJet->neHEF());
+      fillBranch(outputTree_event->jtnef, recJet->neEmEF());
+      fillBranch(outputTree_event->jtcef, recJet->chEmEF());
+      fillBranch(outputTree_event->jtmuf, 0.); // value not available in nanoAOD 
+      fillBranch(outputTree_event->jthfhf, 0.); // value not available in nanoAOD
+      fillBranch(outputTree_event->jthfef, 0.); // value not available in nanoAOD
+
       ++numRecJets_selected;
     }
 
     outputTree_event->nref = numRecJets_selected;
 
     outputTree->Fill();
-    
-    ++selectedEntries;
-    selectedEntries_weighted += evtInfo.weight();
+
+    selectedJets += numRecJets_selected;
+    selectedJets_weighted += (numRecJets_selected*evtInfo.weight());
   }
 
   std::cout << "max num. Entries = " << inputTree->getCumulativeMaxEventCount()
             << " (limited by " << maxEvents << ") processed in "
             << inputTree->getProcessedFileCount() << " file(s) (out of "
             << inputTree->getFileCount() << ")\n"
-            << " analyzed = " << analyzedEntries << '\n'
-            << " selected = " << selectedEntries << " (weighted = " << selectedEntries_weighted << ")\n\n"
-            << "cut-flow table" << std::endl;
-  
+            << " analyzed events = " << analyzedEvents << " (weighted = " << analyzedEvents_weighted << ")\n"
+            << " selected jets = " << selectedJets << " (weighted = " << selectedJets_weighted << ")\n\n";
+
   delete recJetReader;
   delete genJetReader;
 
