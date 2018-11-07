@@ -274,6 +274,9 @@ void JRAEvent::MakeVectors()
    ntrks_highpt            = new vector<int>;
    rhos                    = new vector<float>;
    refrank                 = new vector<UChar_t>;
+   refpdgid                = nullptr;
+   refpdgid_algorithmicDef = nullptr;
+   refpdgid_physicsDef     = nullptr;
    if(!flags.test(0) || (flags.test(0) && flags.test(2))) {
       refpdgid                = new vector<int>;
       refpdgid_algorithmicDef = new vector<int>;
@@ -284,9 +287,11 @@ void JRAEvent::MakeVectors()
    refeta                  = new vector<float>;
    refphi                  = new vector<float>;
    refy                    = new vector<float>;
+   refdphijt               = nullptr;
    if(!flags.test(0) || (flags.test(0) && flags.test(3))) {
       refdphijt               = new vector<float>;
    }
+   refdrjt                 = nullptr;
    if(!flags.test(0) || (flags.test(0) && !flags.test(3))) {
       refdrjt                 = new vector<float>;
    }
@@ -298,6 +303,14 @@ void JRAEvent::MakeVectors()
    jty                     = new vector<float>;
    jtjec                   = new vector<float>;
    jtarea                  = new vector<float>;
+   jtemf                   = nullptr;
+   jtchf                   = nullptr;
+   jtnhf                   = nullptr;
+   jtnef                   = nullptr;
+   jtcef                   = nullptr;
+   jtmuf                   = nullptr;
+   jthfhf                  = nullptr;
+   jthfef                  = nullptr;
    if(!flags.test(0) || (flags.test(0) && flags.test(4))) {
       if (!flags.test(0) || (flags.test(0) && flags.test(5))) {
          jtemf                   = new vector<float>;
@@ -312,6 +325,13 @@ void JRAEvent::MakeVectors()
          jthfef                  = new vector<float>;
       }
    }
+   pfcand_px               = nullptr;
+   pfcand_py               = nullptr;
+   pfcand_pt               = nullptr;
+   pfcand_eta              = nullptr;
+   pfcand_phi              = nullptr;
+   pfcand_e                = nullptr;
+   pfcand_id               = nullptr;
    if (!flags.test(0) || (flags.test(0) && flags.test(6) && flags.test(7))) {
       pfcand_px               = new vector<float>;
       pfcand_py               = new vector<float>;
