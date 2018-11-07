@@ -21,14 +21,14 @@
 #include "DataFormats/Math/interface/deltaR.h" // deltaR
 #include "DataFormats/Math/interface/deltaPhi.h" // deltaPhi
 
-#include "JetMETAnalysis/JetAnalyzers/interface/RecoJet.h" // RecoJet
-#include "JetMETAnalysis/JetAnalyzers/interface/RecoJetReader.h" // RecoJetReader
-#include "JetMETAnalysis/JetAnalyzers/interface/GenJet.h" // GenJet
-#include "JetMETAnalysis/JetAnalyzers/interface/GenJetReader.h" // GenJetReader
-#include "JetMETAnalysis/JetAnalyzers/interface/JetCollectionGenMatcher.h" // JetCollectionGenMatcher
-#include "JetMETAnalysis/JetAnalyzers/interface/EventInfo.h" // EventInfo
-#include "JetMETAnalysis/JetAnalyzers/interface/EventInfoReader.h" // EventInfoReader
-#include "JetMETAnalysis/JetAnalyzers/interface/TTreeWrapper.h" // TTreeWrapper
+#include "JetMETAnalysis/JetUtilities/interface/RecoJet.h" // RecoJet
+#include "JetMETAnalysis/JetUtilities/interface/RecoJetReader.h" // RecoJetReader
+#include "JetMETAnalysis/JetUtilities/interface/GenJet.h" // GenJet
+#include "JetMETAnalysis/JetUtilities/interface/GenJetReader.h" // GenJetReader
+#include "JetMETAnalysis/JetUtilities/interface/JetCollectionGenMatcher.h" // JetCollectionGenMatcher
+#include "JetMETAnalysis/JetUtilities/interface/EventInfo.h" // EventInfo
+#include "JetMETAnalysis/JetUtilities/interface/EventInfoReader.h" // EventInfoReader
+#include "JetMETAnalysis/JetUtilities/interface/TTreeWrapper.h" // TTreeWrapper
 #include "JetMETAnalysis/JetUtilities/interface/JRAEvent.h" // JRAEvent
 
 #include <TBenchmark.h> // TBenchmark

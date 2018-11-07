@@ -1,5 +1,4 @@
 <use   name="JetMETAnalysis/JetUtilities"/>
-<use   name="JetMETAnalysis/JetAnalyzers"/>
 <use   name="CondFormats/JetMETObjects"/>
 <use   name="DataFormats/FWLite"/>
 <use   name="DataFormats/Math"/>
