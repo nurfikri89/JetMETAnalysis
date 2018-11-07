@@ -54,7 +54,7 @@ protected:
   Float_t * jet_phi_;
   Float_t * jet_mass_;
   Int_t * jet_partonFlavour_;
-  UInt_t * jet_hadronFlavour_;
+  UChar_t * jet_hadronFlavour_;
 
   // CV: make sure that only one RecoJetReader instance exists for a given branchName,
   //     as ROOT cannot handle multiple TTree::SetBranchAddress calls for the same branch.
