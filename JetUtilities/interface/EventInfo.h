@@ -51,7 +51,7 @@ private:
   UInt_t    lumi_;        ///< luminosity
   ULong64_t event_;       ///< event number
   Int_t     numPU_;       ///< actual number of pileup interactions
-  Int_t     numPU_true_;  ///< true number of pileup interactions (mean of Poisson distribution)
+  Float_t   numPU_true_;  ///< true number of pileup interactions (mean of Poisson distribution)
   Int_t     numVertices_; ///< number of reconstructed proton-proton collision vertices (including pileup)
   Float_t   vertexZ_;     ///< position, along beam direction, of hard-scatter vertex
   Float_t   rho_;         ///< average energy density in the event (reconstructed by FastJet algorithm)
