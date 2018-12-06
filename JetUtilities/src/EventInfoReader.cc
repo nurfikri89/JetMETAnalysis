@@ -5,12 +5,14 @@
 #include <TTree.h> // TTree
 
 EventInfoReader::EventInfoReader(const std::string& branchName_numPU,
-				 const std::string& branchName_numPU_true,
-				 const std::string& branchName_numVertices, 
-				 const std::string& branchName_vertexZ,
-				 const std::string& branchName_rho,
-				 const std::string& branchName_weight,
-				 const std::string& branchName_pThat)
+                                 const std::string& branchName_numPU_true,
+                                 const std::string& branchName_numVertices,
+                                 const std::string& branchName_vertexZ,
+                                 const std::string& branchName_rho,
+                                 const std::string& branchName_weight,
+                                 const std::string& branchName_pThat,
+                                 const std::string& branchName_pudensity,
+                                 const std::string& branchName_gpudensity)
   : branchName_run_("run")
   , branchName_lumi_("luminosityBlock")
   , branchName_event_("event")
@@ -21,6 +23,8 @@ EventInfoReader::EventInfoReader(const std::string& branchName_numPU,
   , branchName_rho_(branchName_rho)
   , branchName_weight_(branchName_weight)
   , branchName_pThat_(branchName_pThat)
+  , branchName_pudensity_(branchName_pudensity)
+  , branchName_gpudensity_(branchName_gpudensity)
 {}
 
 void
@@ -37,6 +41,8 @@ EventInfoReader::setBranchAddresses(TTree * tree)
   bai.setBranchAddress(evtInfo_.rho_, branchName_rho_);
   bai.setBranchAddress(evtInfo_.weight_, branchName_weight_);
   bai.setBranchAddress(evtInfo_.pThat_, branchName_pThat_);
+  bai.setBranchAddress(evtInfo_.pudensity_, branchName_pudensity_);
+  bai.setBranchAddress(evtInfo_.gpudensity_, branchName_gpudensity_);
 }
 
 EventInfo

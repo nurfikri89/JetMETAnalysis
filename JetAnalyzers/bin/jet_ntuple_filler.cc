@@ -95,6 +95,8 @@ int main(int argc, char* argv[])
   std::string src_rho = cfg_jet_ntuple_filler.getParameter<std::string>("src_rho");
   std::string src_weight = cfg_jet_ntuple_filler.getParameter<std::string>("src_weight");
   std::string src_pThat = cfg_jet_ntuple_filler.getParameter<std::string>("src_pThat");
+  std::string src_pudensity = cfg_jet_ntuple_filler.getParameter<std::string>("src_pudensity");
+  std::string src_gpudensity = cfg_jet_ntuple_filler.getParameter<std::string>("src_gpudensity");
   
   double dR_match = cfg_jet_ntuple_filler.getParameter<double>("dR_match");
 
@@ -137,7 +139,7 @@ int main(int argc, char* argv[])
 
   EventInfoReader* evtInfoReader = new EventInfoReader(
     src_numPU, src_numPU_true, src_numVertices, src_vertexZ, src_rho, 
-    src_weight, src_pThat);
+    src_weight, src_pThat, src_pudensity, src_gpudensity);
   inputTree->registerReader(evtInfoReader);
 
   RecoJetReader* recJetReader = new RecoJetReader(src_recJets);
@@ -187,6 +189,8 @@ int main(int argc, char* argv[])
     outputTree_event->run = evtInfo.run();
     outputTree_event->lumi = evtInfo.lumi();
     outputTree_event->evt = evtInfo.event();
+    outputTree_event->pudensity = evtInfo.pudensity();
+    outputTree_event->gpudensity = evtInfo.gpudensity();
     outputTree_event->refdzvtx->push_back(0);
 
     int numRecJets_selected = 0;

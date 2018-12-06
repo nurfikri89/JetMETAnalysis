@@ -12,12 +12,14 @@ class EventInfoReader
 {
 public:
   EventInfoReader(const std::string& branchName_numPU,
-		  const std::string& branchName_numPU_true,
-		  const std::string& branchName_numVertices, 
-		  const std::string& branchName_vertexZ,
-		  const std::string& branchName_rho,
-		  const std::string& branchName_weight,
-		  const std::string& branchName_pThat);
+                  const std::string& branchName_numPU_true,
+                  const std::string& branchName_numVertices,
+                  const std::string& branchName_vertexZ,
+                  const std::string& branchName_rho,
+                  const std::string& branchName_weight,
+                  const std::string& branchName_pThat,
+                  const std::string& branchName_pudensity,
+                  const std::string& branchName_gpudensity);
 
   ~EventInfoReader() {}
 
@@ -38,6 +40,8 @@ protected:
   std::string branchName_rho_;
   std::string branchName_weight_;
   std::string branchName_pThat_;
+  std::string branchName_pudensity_;
+  std::string branchName_gpudensity_;
 
   EventInfo evtInfo_;
 };

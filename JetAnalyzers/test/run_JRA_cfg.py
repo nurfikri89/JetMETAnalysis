@@ -5,7 +5,7 @@ import FWCore.ParameterSet.Config as cms
 #!
 # Conditions source options: GT, SQLite, DB
 conditionsSource = "GT"
-era = "Spring16_25nsV1_MC"
+era = "Fall17_25nsV8_MC"
 doProducer = False
 process = cms.Process("JRA")
 multithread = False
@@ -48,7 +48,7 @@ for k, v in algsizetype.iteritems():
 #! CONDITIONS (DELIVERING JEC BY DEFAULT!)
 #!
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
-process.GlobalTag.globaltag = cms.string('80X_mcRun2_asymptotic_v5_2016PixDynIneff')
+process.GlobalTag.globaltag = cms.string('94X_mc2017_realistic_v14')
 
 if conditionsSource != "GT":
     if conditionsSource == "DB":
@@ -66,26 +66,23 @@ if conditionsSource != "GT":
 #!
 #! INPUT
 #!
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
 
 ##############################################
 # External Input File (most likely from DAS) #
 ##############################################
-try:
-    process.load("JetMETAnalysis.JetAnalyzers.<filename without extension>")
-except ImportError:
-    print "Couldn't open the external list of files from DAS. If you just checkout out the JetResponseAnalyzer package you will need to make this file yourself. Currently Falling back to opening the list hard-coded in run_JRA_cfg.py. This is not a bad action as long as it is what you intended to have happen."
-    inputFiles = cms.untracked.vstring(
-	    'root://cmsxrootd.fnal.gov//store/mc/<path to root file>/<filename>.root',
-	    )
-    process.source = cms.Source("PoolSource", fileNames = inputFiles )
+inputFiles = cms.untracked.vstring(
+# 'root://cms-xrd-global.cern.ch///store/mc/RunIIFall17MiniAOD/QCD_Pt-15to7000_TuneCP5_Flat_13TeV_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/50000/0ABB05FD-DCDA-E711-82B2-0025901D08D2.root',
+ 'root://cms-xrd-global.cern.ch///store/mc/RunIIFall17DRPremix/QCD_Pt-15to7000_TuneCP5_Flat_13TeV_pythia8/AODSIM/94X_mc2017_realistic_v10-v1/50000/00304636-1BDB-E711-B6F3-FA163ECE02A9.root',
+)
+process.source = cms.Source("PoolSource", fileNames = inputFiles )
 
 
 #!
 #! SERVICES
 #!
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True))
 if doProducer:
     process.add_(cms.Service("Tracer"))
@@ -152,7 +149,7 @@ if doProducer:
 #!
 
 #Not sure what this does
-#processDumpFile = open('runJRA.dump' , 'w')
-#print >> processDumpFile, process.dumpPython()
+processDumpFile = open('runJRA.dump' , 'w')
+print >> processDumpFile, process.dumpPython()
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.options.allowUnscheduled = cms.untracked.bool(True)

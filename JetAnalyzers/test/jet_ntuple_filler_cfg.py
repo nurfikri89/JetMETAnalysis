@@ -6,7 +6,7 @@ process = cms.PSet()
 process.fwliteInput = cms.PSet(
     fileNames = cms.vstring(),
     maxEvents = cms.int32(-1),
-    outputEvery = cms.uint32(100000)
+    outputEvery = cms.uint32(1)
 )
 
 process.fwliteOutput = cms.PSet(
@@ -25,6 +25,8 @@ process.jet_ntuple_filler = cms.PSet(
     src_rho = cms.string('fixedGridRhoFastjetAll'),
     src_weight = cms.string('Generator_weight'),
     src_pThat = cms.string('Generator_binvar'),
+    src_pudensity = cms.string('Pileup_pudensity'),
+    src_gpudensity = cms.string('Pileup_gpudensity'),
     
     dR_match = cms.double(0.25),
 
@@ -60,7 +62,7 @@ process.jet_ntuple_filler = cms.PSet(
 )
 
 process.fwliteInput.fileNames = cms.vstring(
-    "file:/hdfs/cms/store/user/kaehatah/NanoProduction_v2_2018Jun08/QCD_Pt_170to250_bcToE_TuneCP5_13TeV_pythia8/NanoProduction_v2_2018Jun08_QCD_Pt_170to250_bcToE_TuneCP5_13TeV_pythia8__RunIIFall17MiniAOD-94X_mc2017_realistic_v11-v1/180608_194305/0000/tree_99.root"
+  "file:JME-RunIIFall17NanoAOD.root"
 )
 #process.fwliteInput.outputEvery = cms.uint32(1)
 #process.fwliteInput.maxEvents = cms.int32(100)
