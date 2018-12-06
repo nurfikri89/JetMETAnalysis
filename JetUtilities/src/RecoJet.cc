@@ -3,13 +3,14 @@
 #include "JetMETAnalysis/JetUtilities/interface/GenJet.h" // GenJet
 
 RecoJet::RecoJet(const Jet & jet,
-		 Float_t area,
-		 Float_t rawFactor,
-		 Float_t chHEF,
-		 Float_t neHEF,
-		 Float_t chEmEF,
-		 Float_t neEmEF,
-		 Int_t jetId)
+                 Float_t area,
+                 Float_t rawFactor,
+                 Float_t chHEF,
+                 Float_t neHEF,
+                 Float_t chEmEF,
+                 Float_t neEmEF,
+                 Float_t muEF,
+                 Int_t jetId)
   : Jet(jet)
   , area_(area)
   , rawFactor_(rawFactor)
@@ -17,6 +18,7 @@ RecoJet::RecoJet(const Jet & jet,
   , neHEF_(neHEF)
   , chEmEF_(chEmEF)
   , neEmEF_(neEmEF)
+  , muEF_(muEF)
   , jetId_(jetId)
   , genJet_(nullptr)
 {}
@@ -63,6 +65,12 @@ RecoJet::neEmEF() const
   return neEmEF_;
 }
 
+Float_t
+RecoJet::muEF() const
+{
+  return muEF_;
+}
+
 Int_t 
 RecoJet::jetId() const
 {
@@ -86,6 +94,7 @@ operator<<(std::ostream & stream,
             " neHEF = " << jet.neHEF()                 << ","
             " chEmEF = " << jet.chEmEF()               << ","
             " neEmEF = " << jet.neEmEF()               << ","   
+            " muEF = " << jet.muEF()                   << ","
             " jetId = " << jet.jetId()                 << "\n";
   if(jet.genJet())
   {

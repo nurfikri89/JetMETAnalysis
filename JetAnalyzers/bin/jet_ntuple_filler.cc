@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     }
     if ( !(jetCorrParams.size() >= 1) ) 
       throw cms::Exception("jet_ntuple_filler")
-	<< "Invalid Configuration parameter 'jetCorrectionLevels' = " << jetCorrectionLevels << " !!\n";
+        << "Invalid Configuration parameter 'jetCorrectionLevels' = " << jetCorrectionLevels << " !!\n";
     jetCorrector = new FactorizedJetCorrector(jetCorrParams);
   }
 
@@ -195,38 +195,38 @@ int main(int argc, char* argv[])
 
     int numRecJets_selected = 0;
     for ( std::vector<RecoJet>::const_iterator recJet = recJets.begin();
-	  recJet != recJets.end(); ++recJet ) {
+          recJet != recJets.end(); ++recJet ) {
       const GenJet* genJet = recJet->genJet();
       if ( !genJet ) continue;
 
       double sf = 1. - recJet->rawFactor();
       if ( sf <= 1.e-3 ) {
-	std::cout << "Warning: raw jet energy = " << sf*recJet->p4().energy() 
-		  << " --> skipping jet with zero or negative energy !!" << std::endl;
-	continue;
+        std::cout << "Warning: raw jet energy = " << sf*recJet->p4().energy()
+                  << " --> skipping jet with zero or negative energy !!" << std::endl;
+        continue;
       }
       Jet::LorentzVector recJetP4_uncorr(sf*recJet->pt(), recJet->eta(), recJet->phi(), sf*recJet->mass());
       assert(std::fabs(recJetP4_uncorr.eta() - recJet->eta()) < 1.e-2);
       assert(std::fabs(deltaPhi(recJetP4_uncorr.phi(), recJet->phi())) < 1.e-2);
 
       if ( isDEBUG ) {
-	std::cout << "reconstructed jet #" << numRecJets_selected << ":" << std::endl;
-	std::cout << (*recJet);
-	std::cout << std::endl;
+        std::cout << "reconstructed jet #" << numRecJets_selected << ":" << std::endl;
+        std::cout << (*recJet);
+        std::cout << std::endl;
       }
 
       double jec = 1.;
       if ( jetCorrector ) {
-	jetCorrector->setJetEta(recJetP4_uncorr.eta());
-	jetCorrector->setJetPt(recJetP4_uncorr.pt());
-	jetCorrector->setJetA(recJet->area());
-	jetCorrector->setRho(evtInfo.rho());
-	jec = jetCorrector->getCorrection();
-	if ( isDEBUG ) {
-	  std::cout << "ratio of old/new JEC scale factor = " << (recJet->pt()/recJetP4_uncorr.pt())/jec << std::endl;
-	  std::cout << std::endl;
-	}
-	recJetP4_uncorr = Jet::LorentzVector(sf*recJet->pt()*jec, recJet->eta(), recJet->phi(), sf*recJet->mass()*jec);
+        jetCorrector->setJetEta(recJetP4_uncorr.eta());
+        jetCorrector->setJetPt(recJetP4_uncorr.pt());
+        jetCorrector->setJetA(recJet->area());
+        jetCorrector->setRho(evtInfo.rho());
+        jec = jetCorrector->getCorrection();
+        if ( isDEBUG ) {
+          std::cout << "ratio of old/new JEC scale factor = " << (recJet->pt()/recJetP4_uncorr.pt())/jec << std::endl;
+          std::cout << std::endl;
+        }
+        recJetP4_uncorr = Jet::LorentzVector(sf*recJet->pt()*jec, recJet->eta(), recJet->phi(), sf*recJet->mass()*jec);
       }
 
       outputTree_event->refrank->push_back(numRecJets_selected);
@@ -253,7 +253,7 @@ int main(int argc, char* argv[])
       fillBranch(outputTree_event->jtnhf, recJet->neHEF());
       fillBranch(outputTree_event->jtnef, recJet->neEmEF());
       fillBranch(outputTree_event->jtcef, recJet->chEmEF());
-      fillBranch(outputTree_event->jtmuf, 0.); // value not available in nanoAOD 
+      fillBranch(outputTree_event->jtmuf, recJet->muEF());
       fillBranch(outputTree_event->jthfhf, 0.); // value not available in nanoAOD
       fillBranch(outputTree_event->jthfef, 0.); // value not available in nanoAOD
 

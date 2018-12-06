@@ -55,7 +55,7 @@ process.jet_ntuple_filler = cms.PSet(
     # - 7* (128) "save candidates"
     # The default value is 1+4+64=69.
     # Options marked with an asterisk are not supported yet.
-    outputTree_flags = cms.uint32(69),
+    outputTree_flags = cms.uint32(117),
 
     # Flag to enable (True) or disable (False) debug output
     isDEBUG = cms.bool(False)

@@ -24,6 +24,7 @@ RecoJetReader::RecoJetReader(const std::string & branchName_obj)
   , jet_neHEF_(nullptr)
   , jet_chEmEF_(nullptr)
   , jet_neEmEF_(nullptr)
+  , jet_muEF_(nullptr)
   , jet_jetId_(nullptr)
 {
   setBranchNames();
@@ -47,6 +48,7 @@ RecoJetReader::~RecoJetReader()
     delete[] gInstance->jet_neHEF_;
     delete[] gInstance->jet_chEmEF_;
     delete[] gInstance->jet_neEmEF_;
+    delete[] gInstance->jet_muEF_;
     delete[] gInstance->jet_jetId_;
     instances_[branchName_obj_] = nullptr;
   }
@@ -67,6 +69,7 @@ RecoJetReader::setBranchNames()
     branchName_neHEF_ = Form("%s_%s", branchName_obj_.data(), "neHEF");
     branchName_chEmEF_ = Form("%s_%s", branchName_obj_.data(), "chEmEF");
     branchName_neEmEF_ = Form("%s_%s", branchName_obj_.data(), "neEmEF");
+    branchName_muEF_ = Form("%s_%s", branchName_obj_.data(), "muEF");
     branchName_jetId_ = Form("%s_%s", branchName_obj_.data(), "jetId");
     instances_[branchName_obj_] = this;
   }
@@ -101,6 +104,7 @@ RecoJetReader::setBranchAddresses(TTree * tree)
     bai.setBranchAddress(jet_neHEF_, branchName_neHEF_);
     bai.setBranchAddress(jet_chEmEF_, branchName_chEmEF_);
     bai.setBranchAddress(jet_neEmEF_, branchName_neEmEF_);
+    bai.setBranchAddress(jet_muEF_, branchName_muEF_);
     bai.setBranchAddress(jet_jetId_, branchName_jetId_);
   }
 }
@@ -130,15 +134,16 @@ RecoJetReader::read() const
           gInstance->jet_pt_[idxJet],
           gInstance->jet_eta_[idxJet],
           gInstance->jet_phi_[idxJet],
-          gInstance->jet_mass_[idxJet]
+          gInstance->jet_mass_[idxJet],
         },
-	gInstance->jet_area_[idxJet],
+        gInstance->jet_area_[idxJet],
         gInstance->jet_rawFactor_[idxJet],
         gInstance->jet_chHEF_[idxJet],
         gInstance->jet_neHEF_[idxJet],
         gInstance->jet_chEmEF_[idxJet],
         gInstance->jet_neEmEF_[idxJet],
-        gInstance->jet_jetId_[idxJet]
+        gInstance->jet_muEF_[idxJet],
+        gInstance->jet_jetId_[idxJet],
       });
     } // idxJet
   } // nJets > 0
