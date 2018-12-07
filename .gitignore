@@ -1,0 +1,9 @@
+*.pyc
+__init__.py
+.idea
+*.creator
+*.creator.user
+*.config
+*.files
+*.includes
+
