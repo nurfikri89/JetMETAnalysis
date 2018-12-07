@@ -181,6 +181,10 @@ int main(int argc, char* argv[])
     outputTree_event->npus->push_back(evtInfo.numPU());
     outputTree_event->tnpus->push_back(evtInfo.numPU_true());
     outputTree_event->bxns->push_back(0);
+    outputTree_event->sumpt_lowpt->push_back(0.);
+    outputTree_event->sumpt_highpt->push_back(0.);
+    outputTree_event->ntrks_lowpt->push_back(0);
+    outputTree_event->ntrks_highpt->push_back(0);
     outputTree_event->rho = evtInfo.rho();
     outputTree_event->pthat = evtInfo.pThat();
     outputTree_event->weight = evtInfo.weight();
