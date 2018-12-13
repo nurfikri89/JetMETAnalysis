@@ -36,7 +36,7 @@ process.jet_ntuple_filler = cms.PSet(
     #  - 'l2l3'   (L2Relative+L3Absolute)
     #  - 'l1l2l3' (L1Fastjet+L2Relative+L3Absolute)
     #  - ''       (no jet energy corrections applied)
-    jetCorrectionLevels = cms.string('l1'),
+    jetCorrectionLevels = cms.string(''),
     jecFilePath = cms.string('JetMETAnalysis/JetAnalyzers/data/JEC_Fall17_17Nov2017_V8_MC/'),
     jecFileName_l1 = cms.string('Fall17_17Nov2017_V8_MC_L1FastJet_AK4PFchs.txt'),
     jecFileName_l2 = cms.string('Fall17_17Nov2017_V8_MC_L2Relative_AK4PFchs.txt'),
