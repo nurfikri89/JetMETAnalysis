@@ -217,8 +217,8 @@ int main(int argc, char* argv[])
     outputTree_event->run = evtInfo.run();
     outputTree_event->lumi = evtInfo.lumi();
     outputTree_event->evt = evtInfo.event();
-    outputTree_event->pudensity = 0.;
-    outputTree_event->gpudensity = 0.;
+    outputTree_event->pudensity = evtInfo.pudensity();
+    outputTree_event->gpudensity = evtInfo.gpudensity();
     outputTree_event->refdzvtx->push_back(0);
 
     int numRecJets_selected = 0;
@@ -281,7 +281,7 @@ int main(int argc, char* argv[])
       fillBranch(outputTree_event->jtnhf, recJet->neHEF());
       fillBranch(outputTree_event->jtnef, recJet->neEmEF());
       fillBranch(outputTree_event->jtcef, recJet->chEmEF());
-      fillBranch(outputTree_event->jtmuf, 0.); // value not available in nanoAOD
+      fillBranch(outputTree_event->jtmuf, recJet->muEF());
       fillBranch(outputTree_event->jthfhf, 0.); // value not available in nanoAOD
       fillBranch(outputTree_event->jthfef, 0.); // value not available in nanoAOD
 
