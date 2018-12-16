@@ -22,7 +22,8 @@ class RecoJetReader
   : public ReaderBase
 {
  public:
-  RecoJetReader(const std::string & branchName_obj);
+  RecoJetReader(const std::string & branchName_obj,
+                bool run_ak4pfchs);
   ~RecoJetReader();
 
   /**
@@ -48,6 +49,8 @@ protected:
   const unsigned int max_nJets_;
   std::string branchName_num_;
   std::string branchName_obj_;
+
+  bool run_ak4pfchs_;
 
   std::string branchName_pt_;
   std::string branchName_eta_;
