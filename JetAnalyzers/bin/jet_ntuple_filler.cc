@@ -95,8 +95,6 @@ int main(int argc, char* argv[])
   std::string src_rho = cfg_jet_ntuple_filler.getParameter<std::string>("src_rho");
   std::string src_weight = cfg_jet_ntuple_filler.getParameter<std::string>("src_weight");
   std::string src_pThat = cfg_jet_ntuple_filler.getParameter<std::string>("src_pThat");
-  std::string src_pudensity = cfg_jet_ntuple_filler.getParameter<std::string>("src_pudensity");
-  std::string src_gpudensity = cfg_jet_ntuple_filler.getParameter<std::string>("src_gpudensity");
   
   double dR_match = cfg_jet_ntuple_filler.getParameter<double>("dR_match");
 
@@ -139,7 +137,7 @@ int main(int argc, char* argv[])
 
   EventInfoReader* evtInfoReader = new EventInfoReader(
     src_numPU, src_numPU_true, src_numVertices, src_vertexZ, src_rho, 
-    src_weight, src_pThat, src_pudensity, src_gpudensity);
+    src_weight, src_pThat);
   inputTree->registerReader(evtInfoReader);
 
   RecoJetReader* recJetReader = new RecoJetReader(src_recJets);
