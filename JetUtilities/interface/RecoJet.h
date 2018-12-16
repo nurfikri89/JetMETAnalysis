@@ -28,6 +28,8 @@ class RecoJet
           Float_t chEmEF,
           Float_t neEmEF,
           Float_t muEF,
+          Float_t hfEF,
+          Float_t hfmEF,
           Int_t jetId);
 
   ~RecoJet() {}
@@ -48,6 +50,8 @@ class RecoJet
   Float_t chEmEF() const;
   Float_t neEmEF() const;
   Float_t muEF() const;
+  Float_t hfEF() const;
+  Float_t hfmEF() const;
   Int_t jetId() const;
 
   const GenJet * genJet() const;
@@ -62,6 +66,8 @@ class RecoJet
   Float_t chEmEF_;    ///< charged Electromagnetic Energy Fraction
   Float_t neEmEF_;    ///< neutral Electromagnetic Energy Fraction
   Float_t muEF_;      ///< muon Energy Fraction
+  Float_t hfEF_;
+  Float_t hfmEF_;
   Int_t jetId_;       ///< jet ID, as explained in https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2017
 
   const GenJet* genJet_; ///< matching to generator-level jet  

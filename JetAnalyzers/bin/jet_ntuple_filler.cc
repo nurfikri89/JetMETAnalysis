@@ -281,8 +281,8 @@ int main(int argc, char* argv[])
       fillBranch(outputTree_event->jtnef, recJet->neEmEF());
       fillBranch(outputTree_event->jtcef, recJet->chEmEF());
       fillBranch(outputTree_event->jtmuf, recJet->muEF());
-      fillBranch(outputTree_event->jthfhf, 0.); // value not available in nanoAOD
-      fillBranch(outputTree_event->jthfef, 0.); // value not available in nanoAOD
+      fillBranch(outputTree_event->jthfhf, recJet->hfEF());
+      fillBranch(outputTree_event->jthfef, recJet->hfmEF());
 
       ++numRecJets_selected;
     }

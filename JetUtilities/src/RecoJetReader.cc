@@ -25,6 +25,8 @@ RecoJetReader::RecoJetReader(const std::string & branchName_obj)
   , jet_chEmEF_(nullptr)
   , jet_neEmEF_(nullptr)
   , jet_muEF_(nullptr)
+  , jet_hfEF_(nullptr)
+  , jet_hfmEF_(nullptr)
   , jet_jetId_(nullptr)
 {
   setBranchNames();
@@ -49,6 +51,8 @@ RecoJetReader::~RecoJetReader()
     delete[] gInstance->jet_chEmEF_;
     delete[] gInstance->jet_neEmEF_;
     delete[] gInstance->jet_muEF_;
+    delete[] gInstance->jet_hfEF_;
+    delete[] gInstance->jet_hfmEF_;
     delete[] gInstance->jet_jetId_;
     instances_[branchName_obj_] = nullptr;
   }
@@ -70,6 +74,8 @@ RecoJetReader::setBranchNames()
     branchName_chEmEF_ = Form("%s_%s", branchName_obj_.data(), "chEmEF");
     branchName_neEmEF_ = Form("%s_%s", branchName_obj_.data(), "neEmEF");
     branchName_muEF_ = Form("%s_%s", branchName_obj_.data(), "muEF");
+    branchName_hfEF_ = Form("%s_%s", branchName_obj_.data(), "HFHEF");
+    branchName_hfmEF_ = Form("%s_%s", branchName_obj_.data(), "HFEMEF");
     branchName_jetId_ = Form("%s_%s", branchName_obj_.data(), "jetId");
     instances_[branchName_obj_] = this;
   }
@@ -105,6 +111,8 @@ RecoJetReader::setBranchAddresses(TTree * tree)
     bai.setBranchAddress(jet_chEmEF_, branchName_chEmEF_);
     bai.setBranchAddress(jet_neEmEF_, branchName_neEmEF_);
     bai.setBranchAddress(jet_muEF_, branchName_muEF_);
+    bai.setBranchAddress(jet_hfEF_, branchName_hfEF_);
+    bai.setBranchAddress(jet_hfmEF_, branchName_hfmEF_);
     bai.setBranchAddress(jet_jetId_, branchName_jetId_);
   }
 }
@@ -143,6 +151,8 @@ RecoJetReader::read() const
         gInstance->jet_chEmEF_[idxJet],
         gInstance->jet_neEmEF_[idxJet],
         gInstance->jet_muEF_[idxJet],
+        gInstance->jet_hfEF_[idxJet],
+        gInstance->jet_hfmEF_[idxJet],
         gInstance->jet_jetId_[idxJet],
       });
     } // idxJet

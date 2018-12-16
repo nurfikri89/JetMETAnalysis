@@ -60,6 +60,8 @@ protected:
   std::string branchName_chEmEF_;
   std::string branchName_neEmEF_;
   std::string branchName_muEF_;
+  std::string branchName_hfEF_;
+  std::string branchName_hfmEF_;
   std::string branchName_jetId_;
 
   UInt_t nJets_;
@@ -74,6 +76,8 @@ protected:
   Float_t * jet_chEmEF_;
   Float_t * jet_neEmEF_;
   Float_t * jet_muEF_;
+  Float_t * jet_hfEF_;
+  Float_t * jet_hfmEF_;
   Int_t * jet_jetId_;
 
   // CV: make sure that only one RecoJetReader instance exists for a given branchName,
