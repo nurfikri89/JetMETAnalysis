@@ -1,6 +1,10 @@
 import FWCore.ParameterSet.Config as cms
+import os
 
-run_ak4pfchs = False
+run_ak4pfchs = True
+if 'JET_NTUPLE_FILLER' in os.environ:
+    assert(os.environ['JET_NTUPLE_FILLER'] in [ '0', '1' ])
+    run_ak4pfchs = bool(int(os.environ['JET_NTUPLE_FILLER']))
 
 process = cms.PSet()
 
