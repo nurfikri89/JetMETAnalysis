@@ -151,7 +151,30 @@ int main(int argc, char* argv[])
   JetCollectionGenMatcher jetGenMatcher;
 
   std::string outputTreeName = cfg_jet_ntuple_filler.getParameter<std::string>("outputTreeName");
-  TTree* outputTree = fs.make<TTree>(outputTreeName.data(), outputTreeName.data());
+  TDirectory * dir = fs.getBareDirectory();
+  if(outputTreeName.find('/') != std::string::npos)
+  {
+    std::stringstream ss(outputTreeName);
+    std::string segment;
+    std::vector<std::string> seglist;
+    while(std::getline(ss, segment, '/'))
+    {
+      if(! segment.empty())
+      {
+        seglist.push_back(segment);
+      }
+    }
+    outputTreeName = seglist.back();
+    seglist.pop_back();
+    for(const std::string & subdirName: seglist)
+    {
+      TDirectory * subdir = dir->mkdir(subdirName.c_str());
+      subdir->cd();
+      dir = subdir;
+    }
+  }
+  dir->cd();
+  TTree* outputTree = new TTree(outputTreeName.data(), outputTreeName.data());
   std::bitset<8> outputTree_flags = cfg_jet_ntuple_filler.getParameter<unsigned>("outputTree_flags");
   JRAEvent* outputTree_event = new JRAEvent(outputTree, outputTree_flags);
 
