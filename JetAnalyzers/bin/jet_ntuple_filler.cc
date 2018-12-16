@@ -95,7 +95,9 @@ int main(int argc, char* argv[])
   std::string src_rho = cfg_jet_ntuple_filler.getParameter<std::string>("src_rho");
   std::string src_weight = cfg_jet_ntuple_filler.getParameter<std::string>("src_weight");
   std::string src_pThat = cfg_jet_ntuple_filler.getParameter<std::string>("src_pThat");
-  
+  std::string src_pudensity = cfg_jet_ntuple_filler.getParameter<std::string>("src_pudensity");
+  std::string src_gpudensity = cfg_jet_ntuple_filler.getParameter<std::string>("src_gpudensity");
+
   double dR_match = cfg_jet_ntuple_filler.getParameter<double>("dR_match");
 
   std::string jetCorrectionLevels = cfg_jet_ntuple_filler.getParameter<std::string>("jetCorrectionLevels");
@@ -115,14 +117,14 @@ int main(int argc, char* argv[])
     if ( jetCorrectionLevels.find("l3") != std::string::npos ) {
       jetCorrParams.push_back(loadJetCorrPar(jecFilePath, jecFileName_l3));
     }
-    if ( !(jetCorrParams.size() >= 1) ) 
+    if ( !(jetCorrParams.size() >= 1) )
       throw cms::Exception("jet_ntuple_filler")
         << "Invalid Configuration parameter 'jetCorrectionLevels' = " << jetCorrectionLevels << " !!\n";
     jetCorrector = new FactorizedJetCorrector(jetCorrParams);
   }
 
   bool isDEBUG = cfg_jet_ntuple_filler.getParameter<bool>("isDEBUG");
-  
+
   fwlite::InputSource inputFiles(cfg);
   int maxEvents = inputFiles.maxEvents();
   std::cout << " maxEvents = " << maxEvents << std::endl;
@@ -136,8 +138,8 @@ int main(int argc, char* argv[])
   std::cout << "Loaded " << inputTree -> getFileCount() << " file(s).\n";
 
   EventInfoReader* evtInfoReader = new EventInfoReader(
-    src_numPU, src_numPU_true, src_numVertices, src_vertexZ, src_rho, 
-    src_weight, src_pThat);
+    src_numPU, src_numPU_true, src_numVertices, src_vertexZ, src_rho,
+    src_weight, src_pThat, src_pudensity, src_gpudensity);
   inputTree->registerReader(evtInfoReader);
 
   RecoJetReader* recJetReader = new RecoJetReader(src_recJets);
@@ -263,9 +265,9 @@ int main(int argc, char* argv[])
       outputTree_event->refeta->push_back(genJet->eta());
       outputTree_event->refphi->push_back(genJet->phi());
       outputTree_event->refy->push_back(genJet->p4().Rapidity());
-      fillBranch(outputTree_event->refdphijt, deltaPhi(genJet->phi(), recJet->phi()));   
+      fillBranch(outputTree_event->refdphijt, deltaPhi(genJet->phi(), recJet->phi()));
       fillBranch(outputTree_event->refdrjt, deltaR(genJet->eta(), genJet->phi(), recJet->eta(), recJet->phi()));
-      outputTree_event->refarea->push_back(0.); // not available in nanoAOD 
+      outputTree_event->refarea->push_back(0.); // not available in nanoAOD
       outputTree_event->jte->push_back(recJetP4_uncorr.energy());
       outputTree_event->jtpt->push_back(recJetP4_uncorr.pt());
       outputTree_event->jteta->push_back(recJetP4_uncorr.eta());
@@ -273,7 +275,7 @@ int main(int argc, char* argv[])
       outputTree_event->jty->push_back(recJetP4_uncorr.Rapidity());
       outputTree_event->jtjec->push_back(jec);
       outputTree_event->jtarea->push_back(recJet->area());
-      fillBranch(outputTree_event->jtemf, 0.); // value not available in nanoAOD 
+      fillBranch(outputTree_event->jtemf, 0.); // value not available in nanoAOD
       fillBranch(outputTree_event->jtchf, recJet->chHEF());
       fillBranch(outputTree_event->jtnhf, recJet->neHEF());
       fillBranch(outputTree_event->jtnef, recJet->neEmEF());
