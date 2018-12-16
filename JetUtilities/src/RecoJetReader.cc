@@ -10,10 +10,12 @@
 std::map<std::string, int> RecoJetReader::numInstances_;
 std::map<std::string, RecoJetReader *> RecoJetReader::instances_;
 
-RecoJetReader::RecoJetReader(const std::string & branchName_obj)
+RecoJetReader::RecoJetReader(const std::string & branchName_obj,
+                             bool run_ak4pfchs)
   : max_nJets_(256)
   , branchName_num_(Form("n%s", branchName_obj.data()))
   , branchName_obj_(branchName_obj)
+  , run_ak4pfchs_(run_ak4pfchs)
   , jet_pt_(nullptr)
   , jet_eta_(nullptr)
   , jet_phi_(nullptr)
@@ -100,11 +102,11 @@ RecoJetReader::setBranchAddresses(TTree * tree)
     bai.setBranchAddress(jet_mass_, branchName_mass_);
     bai.setBranchAddress(jet_area_, branchName_area_);
     bai.setBranchAddress(jet_rawFactor_, branchName_rawFactor_);
-    bai.setBranchAddress(jet_chHEF_, branchName_chHEF_);
-    bai.setBranchAddress(jet_neHEF_, branchName_neHEF_);
-    bai.setBranchAddress(jet_chEmEF_, branchName_chEmEF_);
-    bai.setBranchAddress(jet_neEmEF_, branchName_neEmEF_);
-    bai.setBranchAddress(jet_muEF_, branchName_muEF_);
+    bai.setBranchAddress(jet_chHEF_, run_ak4pfchs_ ? branchName_chHEF_ : "");
+    bai.setBranchAddress(jet_neHEF_, run_ak4pfchs_ ? branchName_neHEF_ : "");
+    bai.setBranchAddress(jet_chEmEF_, run_ak4pfchs_ ? branchName_chEmEF_ : "");
+    bai.setBranchAddress(jet_neEmEF_, run_ak4pfchs_ ? branchName_neEmEF_ : "");
+    bai.setBranchAddress(jet_muEF_, run_ak4pfchs_ ? branchName_muEF_ : "");
     bai.setBranchAddress(jet_jetId_, branchName_jetId_);
   }
 }
@@ -138,11 +140,11 @@ RecoJetReader::read() const
         },
         gInstance->jet_area_[idxJet],
         gInstance->jet_rawFactor_[idxJet],
-        gInstance->jet_chHEF_[idxJet],
-        gInstance->jet_neHEF_[idxJet],
-        gInstance->jet_chEmEF_[idxJet],
-        gInstance->jet_neEmEF_[idxJet],
-        gInstance->jet_muEF_[idxJet],
+        run_ak4pfchs_ ? gInstance->jet_chHEF_[idxJet] : 0.f,
+        run_ak4pfchs_ ? gInstance->jet_neHEF_[idxJet] : 0.f,
+        run_ak4pfchs_ ? gInstance->jet_chEmEF_[idxJet] : 0.f,
+        run_ak4pfchs_ ? gInstance->jet_neEmEF_[idxJet] : 0.f,
+        run_ak4pfchs_ ? gInstance->jet_muEF_[idxJet] : 0.f,
         gInstance->jet_jetId_[idxJet],
       });
     } // idxJet

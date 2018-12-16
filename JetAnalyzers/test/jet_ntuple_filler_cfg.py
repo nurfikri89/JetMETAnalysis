@@ -1,5 +1,6 @@
 import FWCore.ParameterSet.Config as cms
-import os
+
+run_ak4pfchs = False
 
 process = cms.PSet()
 
@@ -10,14 +11,15 @@ process.fwliteInput = cms.PSet(
 )
 
 process.fwliteOutput = cms.PSet(
-    fileName = cms.string('jet_ntuple_filler.root')
+    fileName=cms.string('jet_ntuple_filler_%s.root' % ('ak4' if run_ak4pfchs else 'ak8'))
 )
 
 process.jet_ntuple_filler = cms.PSet(
     inputTreeName = cms.string('Events'),
+    run_ak4pfchs = cms.bool(run_ak4pfchs),
 
-    src_recJets = cms.string('Jet'),
-    src_genJets = cms.string('GenJet'),
+    src_recJets = cms.string('Jet' if run_ak4pfchs else 'FatJet'),
+    src_genJets = cms.string('GenJet' if run_ak4pfchs else 'GenJetAK8'),
     src_numPU = cms.string('Pileup_nPU'),
     src_numPU_true = cms.string('Pileup_nTrueInt'),
     src_numVertices = cms.string('PV_npvsGood'),
@@ -42,7 +44,7 @@ process.jet_ntuple_filler = cms.PSet(
     jecFileName_l2 = cms.string('Fall17_17Nov2017_V8_MC_L2Relative_AK4PFchs.txt'),
     jecFileName_l3 = cms.string('Fall17_17Nov2017_V8_MC_L3Absolute_AK4PFchs.txt'),
     
-    outputTreeName = cms.string('t'),
+    outputTreeName = cms.string('%s/t' % ('ak4pfchs' if run_ak4pfchs else 'ak8puppi')),
     # Configuration of output TTree. The value is bit coded. 
     # The bits have the following meaning:
     # - 0  (  1) to be enabled always
