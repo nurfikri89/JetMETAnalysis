@@ -23,7 +23,7 @@ if doProducer:
 # Jet type options: calo, pf, pfchs, puppi
 # Correction levels: '' (blank), l1, l2, l3, l2l3, l1l2l3
 algsizetype = {'ak':[4,8]}
-jettype = ['pf','pfchs','puppi']
+jettype = ['pf','pfchs','pfpuppi']
 corrs = ['']
 
 algorithms = []
