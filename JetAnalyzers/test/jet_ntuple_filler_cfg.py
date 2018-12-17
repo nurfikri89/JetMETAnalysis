@@ -47,7 +47,7 @@ process.jet_ntuple_filler = cms.PSet(
     jecFileName_l2 = cms.string('Fall17_17Nov2017_V8_MC_L2Relative_AK4PFchs.txt'),
     jecFileName_l3 = cms.string('Fall17_17Nov2017_V8_MC_L3Absolute_AK4PFchs.txt'),
     
-    outputTreeName = cms.string('%s/t' % ('ak4pfchs' if run_ak4pfchs else 'ak8puppi')),
+    outputTreeName = cms.string('%s/t' % ('ak4pfchs' if run_ak4pfchs else 'ak8pfpuppi')),
     # Configuration of output TTree. The value is bit coded. 
     # The bits have the following meaning:
     # - 0  (  1) to be enabled always
