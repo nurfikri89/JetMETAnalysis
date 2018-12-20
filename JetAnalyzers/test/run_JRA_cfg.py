@@ -66,7 +66,7 @@ if conditionsSource != "GT":
 #!
 #! INPUT
 #!
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 
 ##############################################
 # External Input File (most likely from DAS) #
@@ -82,7 +82,7 @@ process.source = cms.Source("PoolSource", fileNames = inputFiles )
 #! SERVICES
 #!
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
-process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True))
 if doProducer:
     process.add_(cms.Service("Tracer"))
