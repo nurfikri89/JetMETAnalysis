@@ -10,6 +10,8 @@ RecoJet::RecoJet(const Jet & jet,
                  Float_t chEmEF,
                  Float_t neEmEF,
                  Float_t muEF,
+                 Float_t hfEF,
+                 Float_t hfmEF,
                  Int_t jetId)
   : Jet(jet)
   , area_(area)
@@ -19,6 +21,8 @@ RecoJet::RecoJet(const Jet & jet,
   , chEmEF_(chEmEF)
   , neEmEF_(neEmEF)
   , muEF_(muEF)
+  , hfEF_(hfEF)
+  , hfmEF_(hfmEF)
   , jetId_(jetId)
   , genJet_(nullptr)
 {}
@@ -71,6 +75,18 @@ RecoJet::muEF() const
   return muEF_;
 }
 
+Float_t
+RecoJet::hfEF() const
+{
+  return hfEF_;
+}
+
+Float_t
+RecoJet::hfmEF() const
+{
+  return hfmEF_;
+}
+
 Int_t 
 RecoJet::jetId() const
 {
@@ -95,6 +111,8 @@ operator<<(std::ostream & stream,
             " chEmEF = " << jet.chEmEF()               << ","
             " neEmEF = " << jet.neEmEF()               << ","   
             " muEF = " << jet.muEF()                   << ","
+            " hfEF = " << jet.hfEF()                   << ","
+            " hfmEF = " << jet.hfmEF()                 << ","
             " jetId = " << jet.jetId()                 << "\n";
   if(jet.genJet())
   {

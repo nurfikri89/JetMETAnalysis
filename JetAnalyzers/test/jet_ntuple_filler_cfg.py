@@ -20,7 +20,6 @@ process.fwliteOutput = cms.PSet(
 
 process.jet_ntuple_filler = cms.PSet(
     inputTreeName = cms.string('Events'),
-    run_ak4pfchs = cms.bool(run_ak4pfchs),
 
     src_recJets = cms.string('Jet' if run_ak4pfchs else 'FatJet'),
     src_genJets = cms.string('GenJet' if run_ak4pfchs else 'GenJetAK8'),

@@ -85,7 +85,6 @@ int main(int argc, char* argv[])
   edm::ParameterSet cfg_jet_ntuple_filler = cfg.getParameter<edm::ParameterSet>("jet_ntuple_filler");
 
   std::string inputTreeName = cfg_jet_ntuple_filler.getParameter<std::string>("inputTreeName");
-  bool run_ak4pfchs = cfg_jet_ntuple_filler.getParameter<bool>("run_ak4pfchs");
 
   std::string src_recJets = cfg_jet_ntuple_filler.getParameter<std::string>("src_recJets");
   std::string src_genJets = cfg_jet_ntuple_filler.getParameter<std::string>("src_genJets");
@@ -143,7 +142,7 @@ int main(int argc, char* argv[])
     src_weight, src_pThat, src_pudensity, src_gpudensity);
   inputTree->registerReader(evtInfoReader);
 
-  RecoJetReader* recJetReader = new RecoJetReader(src_recJets, run_ak4pfchs);
+  RecoJetReader* recJetReader = new RecoJetReader(src_recJets);
   inputTree->registerReader(recJetReader);
 
   GenJetReader* genJetReader = new GenJetReader(src_genJets);
@@ -282,8 +281,8 @@ int main(int argc, char* argv[])
       fillBranch(outputTree_event->jtnef, recJet->neEmEF());
       fillBranch(outputTree_event->jtcef, recJet->chEmEF());
       fillBranch(outputTree_event->jtmuf, recJet->muEF());
-      fillBranch(outputTree_event->jthfhf, 0.); // value not available in nanoAOD
-      fillBranch(outputTree_event->jthfef, 0.); // value not available in nanoAOD
+      fillBranch(outputTree_event->jthfhf, recJet->hfEF());
+      fillBranch(outputTree_event->jthfef, recJet->hfmEF());
 
       ++numRecJets_selected;
     }
