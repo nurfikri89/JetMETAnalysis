@@ -32,7 +32,8 @@ echo "Producing a NANOAODSIM file $NANOAOD from $MINIAOD"
 # baseline taken from https://cms-pdmv.cern.ch/mcm/public/restapi/requests/get_setup/JME-RunIIFall17NanoAOD-00009
 cmsDriver.py step1 --fileout file:$NANOAOD --mc --eventcontent NANOAODSIM --datatier NANOAODSIM --conditions $GT \
   --step NANO --nThreads 2 --era Run2_2017,run2_nanoAOD_94XMiniAODv2 --python_filename $NANOAOD_CFG \
-  --no_exec --filein="file:$MINIAOD" -n $NOF_EVENTS
+  --no_exec --filein="file:$MINIAOD" -n $NOF_EVENTS \
+  --customise_commands="from JetMETAnalysis.JetAnalyzers.prepNanoAOD import prepNanoAOD; prepNanoAOD(process)\n"
 
 echo "Started at `date`"
 cmsRun $NANOAOD_CFG &> nanoaod.log
