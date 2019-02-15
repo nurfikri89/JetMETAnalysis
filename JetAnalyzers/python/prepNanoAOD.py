@@ -46,7 +46,7 @@ def prepNanoAOD(process):
     muEF      = Var("muonEnergyFraction()",          float, doc = "muon Energy Fraction",                            precision = 10),
     HFHEF     = Var("HFHadronEnergyFraction()",      float, doc = "energy fraction in forward hadronic calorimeter", precision = 10),
     HFEMEF    = Var("HFEMEnergyFraction()",          float, doc = "energy fraction in forward EM calorimeter",       precision = 10),
-    rawFactor = Var("1.",                            float, doc = "default",                                                       ),
+    rawFactor = Var("0.",                            float, doc = "default",                                                       ),
     jetId     = Var("1",                             int,   doc = "default",                                                       ),
   )
 
