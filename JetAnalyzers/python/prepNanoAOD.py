@@ -21,6 +21,13 @@ def prepNanoAOD(process):
   process.fatJetTable.variables.HFHEF  = Var("HFHadronEnergyFraction()",      float, doc = "energy fraction in forward hadronic calorimeter", precision = 10)
   process.fatJetTable.variables.HFEMEF = Var("HFEMEnergyFraction()",          float, doc = "energy fraction in forward EM calorimeter",       precision = 10)
 
+  process.jercVarsFatJet = process.jercVars.clone(srcJet = "selectedUpdatedPatJetsAK8WithDeepInfo", maxDR = cms.double(0.8))
+  process.slimmedJetsAK8WithUserData.userFloats.jercCHPUF = cms.InputTag("jercVarsFatJet:chargedHadronPUEnergyFraction")
+  process.slimmedJetsAK8WithUserData.userFloats.jercCHF   = cms.InputTag("jercVarsFatJet:chargedHadronCHSEnergyFraction")
+  process.fatJetTable.variables.jercCHPUF = Var("userFloat('jercCHPUF')", float, doc = "Pileup Charged Hadron Energy Fraction with the JERC group definition", precision = 10)
+  process.fatJetTable.variables.jercCHF   = Var("userFloat('jercCHF')",   float, doc = "Charged Hadron Energy Fraction with the JERC group definition",        precision = 10)
+  process.jetSequence.insert(0, process.jercVarsFatJet)
+
   # use the same cuts for AK4PFCHS and AK8PFPUPPI as in MINIAOD
   process.finalJets.cut             = cms.string("") # 15 -> 10
   process.finalJetsAK8.cut          = cms.string("") # 170 -> 170
@@ -46,8 +53,10 @@ def prepNanoAOD(process):
     muEF      = Var("muonEnergyFraction()",          float, doc = "muon Energy Fraction",                            precision = 10),
     HFHEF     = Var("HFHadronEnergyFraction()",      float, doc = "energy fraction in forward hadronic calorimeter", precision = 10),
     HFEMEF    = Var("HFEMEnergyFraction()",          float, doc = "energy fraction in forward EM calorimeter",       precision = 10),
-    rawFactor = Var("0.",                            float, doc = "default",                                                       ),
-    jetId     = Var("1",                             int,   doc = "default",                                                       ),
+    rawFactor = Var("0.",                            float, doc = "default",                                         precision = 10),
+    jetId     = Var("1",                             int,   doc = "default",                                         precision = 10),
+    jercCHPUF = Var("0.",                            float, doc = "default",                                         precision = 10),
+    jercCHF   = Var("0.",                            float, doc = "default",                                         precision = 10),
   )
 
   # introduce AK8PFCHS collection
@@ -102,11 +111,22 @@ def prepNanoAOD(process):
   process.ak4PFJets_sequence = cms.Sequence(process.ak4PFJets + process.ak4PFJetsTable)
 
   # introduce AK4PFPUPPI collection
+  process.jercVarsAK4PFJetsPuppi = process.jercVars.clone(srcJet = "slimmedJetsPuppi")
+  process.slimmedJetsPuppiWithUserData = cms.EDProducer("PATJetUserDataEmbedder",
+     src = cms.InputTag("slimmedJetsPuppi"),
+     userFloats = cms.PSet(
+       jercCHPUF = cms.InputTag("jercVarsAK4PFJetsPuppi:chargedHadronPUEnergyFraction"),
+       jercCHF   = cms.InputTag("jercVarsAK4PFJetsPuppi:chargedHadronCHSEnergyFraction")
+     ),
+     userInts = cms.PSet(),
+  )
   jetVars_ak4PFJetsPuppi = jetVars.clone(
-    rawFactor = Var("1.-jecFactor('Uncorrected')", float, doc = "1 - Factor to get back to raw pT", precision = 10),
+    rawFactor = Var("1.-jecFactor('Uncorrected')", float, doc = "1 - Factor to get back to raw pT",                                     precision = 10),
+    jercCHPUF = Var("userFloat('jercCHPUF')",      float, doc = "Pileup Charged Hadron Energy Fraction with the JERC group definition", precision = 10),
+    jercCHF   = Var("userFloat('jercCHF')",        float, doc = "Charged Hadron Energy Fraction with the JERC group definition",        precision = 10),
   )
   process.ak4PFJetsPuppiTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-    src       = cms.InputTag("slimmedJetsPuppi"), # pT > 20 GeV
+    src       = cms.InputTag("slimmedJetsPuppiWithUserData"), # pT > 20 GeV
     cut       = cms.string(""),
     name      = cms.string("JetPUPPI"),
     doc       = cms.string("AK4PFPUPPI jets"),
@@ -114,7 +134,9 @@ def prepNanoAOD(process):
     extension = cms.bool(False),
     variables = jetVars_ak4PFJetsPuppi,
   )
-  process.ak4PFJetsPuppi_sequence = cms.Sequence(process.ak4PFJetsPuppiTable)
+  process.ak4PFJetsPuppi_sequence = cms.Sequence(
+    process.jercVarsAK4PFJetsPuppi + process.slimmedJetsPuppiWithUserData + process.ak4PFJetsPuppiTable
+  )
 
   process.nanoSequenceMC += process.chs_sequence + process.ak8PFJetsCHS_sequence + process.ak8PFJets_sequence + \
                             process.ak4PFJets_sequence + process.ak4PFJetsPuppi_sequence
