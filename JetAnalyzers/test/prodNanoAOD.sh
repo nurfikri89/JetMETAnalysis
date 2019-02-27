@@ -43,18 +43,26 @@ echo "Running JRA at `date`"
 cmsRun $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/run_JRA_cfg.py &> jra.log
 echo "Finished at `date`"
 
-echo "Running Ntuple filler for AK4PFCHS jets at `date`"
-export JET_NTUPLE_FILLER=1
-jet_ntuple_filler $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/jet_ntuple_filler_cfg.py &> filler_ak4.log
-echo "Finished at `date`"
+declare -a JETS=(
+  "ak4pf"
+  "ak4pfchs"
+  "ak4pfpuppi"
+  "ak8pf"
+  "ak8pfchs"
+  "ak8pfpuppi"
+)
+JETS_ROOT=""
 
-echo "Running Ntuple filler for AK8PUPPI at `date`"
-export JET_NTUPLE_FILLER=0
-jet_ntuple_filler $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/jet_ntuple_filler_cfg.py &> filler_ak8.log
-echo "Finished at `date`"
+for jet in "${JETS[@]}"; do
+  echo "Running Ntuple filler for $jet jets at `date`";
+  export JET_NTUPLE_FILLER=$jet;
+  jet_ntuple_filler $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/jet_ntuple_filler_cfg.py &> filler_$jet.log;
+  echo "Finished at `date`"
+  JETS_ROOT="$JETS_ROOT jet_ntuple_filler_$jet.root";
+done
 
 unset JET_NTUPLE_FILLER
 
 echo "Hadding the results .."
-hadd -f $JET_NTUPLE_FILLER_FILE jet_ntuple_filler_ak4.root jet_ntuple_filler_ak8.root &> hadd.log
+hadd -f $JET_NTUPLE_FILLER_FILE $JETS_ROOT &> hadd.log
 echo "Finished hadding"

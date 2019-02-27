@@ -1,10 +1,38 @@
 import FWCore.ParameterSet.Config as cms
 import os
 
-run_ak4pfchs = True
-if 'JET_NTUPLE_FILLER' in os.environ:
-    assert(os.environ['JET_NTUPLE_FILLER'] in [ '0', '1' ])
-    run_ak4pfchs = bool(int(os.environ['JET_NTUPLE_FILLER']))
+JET_CHOICES = [ 'ak4pf', 'ak4pfchs', 'ak4pfpuppi', 'ak8pf', 'ak8pfchs', 'ak8pfpuppi' ]
+ENV_NAME = 'JET_NTUPLE_FILLER'
+
+jetChoice = ''
+if ENV_NAME in os.environ:
+    jetChoice = os.environ['JET_NTUPLE_FILLER']
+    if jetChoice not in JET_CHOICES:
+        raise RuntimeError('Invalid value for %s: %s' % (ENV_NAME, jetChoice))
+else:
+    raise RuntimeError('Environment variable %s not set' % ENV_NAME)
+
+if jetChoice == 'ak4pf':
+    recJets = 'JetPF'
+elif jetChoice == 'ak4pfchs':
+    recJets = 'Jet'
+elif jetChoice == 'ak4pfpuppi':
+    recJets = 'JetPUPPI'
+elif jetChoice == 'ak8pf':
+    recJets = 'FatJetPF'
+elif jetChoice == 'ak8pfchs':
+    recJets = 'FatJetCHS'
+elif jetChoice == 'ak8pfpuppi':
+    recJets = 'FatJet'
+else:
+    raise RuntimeError('Unsupported jet collection: %s' % jetChoice)
+
+if jetChoice.startswith('ak4'):
+    genJets = 'GenJet'
+elif jetChoice.startswith('ak8'):
+    genJets = 'GenJetAK8'
+else:
+    raise RuntimeError('Unsupported jet collection: %s' % jetChoice)
 
 process = cms.PSet()
 
@@ -15,14 +43,14 @@ process.fwliteInput = cms.PSet(
 )
 
 process.fwliteOutput = cms.PSet(
-    fileName=cms.string('jet_ntuple_filler_%s.root' % ('ak4' if run_ak4pfchs else 'ak8'))
+    fileName=cms.string('jet_ntuple_filler_%s.root' % jetChoice)
 )
 
 process.jet_ntuple_filler = cms.PSet(
     inputTreeName = cms.string('Events'),
 
-    src_recJets = cms.string('Jet' if run_ak4pfchs else 'FatJet'),
-    src_genJets = cms.string('GenJet' if run_ak4pfchs else 'GenJetAK8'),
+    src_recJets = cms.string(recJets),
+    src_genJets = cms.string(genJets),
     src_numPU = cms.string('Pileup_nPU'),
     src_numPU_true = cms.string('Pileup_nTrueInt'),
     src_numVertices = cms.string('PV_npvsGood'),
@@ -47,7 +75,7 @@ process.jet_ntuple_filler = cms.PSet(
     jecFileName_l2 = cms.string('Fall17_17Nov2017_V8_MC_L2Relative_AK4PFchs.txt'),
     jecFileName_l3 = cms.string('Fall17_17Nov2017_V8_MC_L3Absolute_AK4PFchs.txt'),
     
-    outputTreeName = cms.string('%s/t' % ('ak4pfchs' if run_ak4pfchs else 'ak8pfpuppi')),
+    outputTreeName = cms.string('%s/t' % jetChoice),
     # Configuration of output TTree. The value is bit coded. 
     # The bits have the following meaning:
     # - 0  (  1) to be enabled always
