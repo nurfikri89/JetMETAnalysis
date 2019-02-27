@@ -3,6 +3,8 @@ import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import Var, P4Vars
 from RecoJets.JetProducers.ak8PFJets_cfi import ak8PFJetsCHS, ak8PFJets
 from RecoJets.JetProducers.ak4PFJets_cfi import ak4PFJets, ak4PFJetsPuppi
+from Configuration.Eras.Modifier_run2_miniAOD_80XLegacy_cff import run2_miniAOD_80XLegacy
+from Configuration.Eras.Modifier_run2_nanoAOD_94X2016_cff import run2_nanoAOD_94X2016
 
 def prepNanoAOD(process):
   #TODO: review pT thresholds
@@ -21,7 +23,7 @@ def prepNanoAOD(process):
   process.fatJetTable.variables.HFHEF  = Var("HFHadronEnergyFraction()",      float, doc = "energy fraction in forward hadronic calorimeter", precision = 10)
   process.fatJetTable.variables.HFEMEF = Var("HFEMEnergyFraction()",          float, doc = "energy fraction in forward EM calorimeter",       precision = 10)
 
-  process.jercVarsFatJet = process.jercVars.clone(srcJet = "selectedUpdatedPatJetsAK8WithDeepInfo", maxDR = cms.double(0.8))
+  process.jercVarsFatJet = process.jercVars.clone(srcJet = cms.InputTag("selectedUpdatedPatJetsAK8WithDeepInfo"), maxDR = cms.double(0.8))
   process.slimmedJetsAK8WithUserData.userFloats.jercCHPUF = cms.InputTag("jercVarsFatJet:chargedHadronPUEnergyFraction")
   process.slimmedJetsAK8WithUserData.userFloats.jercCHF   = cms.InputTag("jercVarsFatJet:chargedHadronCHSEnergyFraction")
   process.fatJetTable.variables.jercCHPUF = Var("userFloat('jercCHPUF')", float, doc = "Pileup Charged Hadron Energy Fraction with the JERC group definition", precision = 10)
@@ -41,6 +43,7 @@ def prepNanoAOD(process):
      src = cms.InputTag("packedPFCandidates"),
      cut = cms.string("fromPV"),
   )
+
   process.chs_sequence = cms.Sequence(process.chs)
 
   # prepare jet variables
@@ -111,20 +114,36 @@ def prepNanoAOD(process):
   process.ak4PFJets_sequence = cms.Sequence(process.ak4PFJets + process.ak4PFJetsTable)
 
   # introduce AK4PFPUPPI collection
-  process.jercVarsAK4PFJetsPuppi = process.jercVars.clone(srcJet = "slimmedJetsPuppi")
+  process.jercVarsAK4PFJetsPuppi = process.jercVars.clone(srcJet = cms.InputTag("slimmedJetsPuppi"))
+  process.looseJetIdAK4PFJetsPuppi = process.looseJetId.clone(src = cms.InputTag("slimmedJetsPuppi"))
+  process.tightJetIdAK4PFJetsPuppi = process.tightJetId.clone(src = cms.InputTag("slimmedJetsPuppi"))
+  process.tightJetIdLepVetoAK4PFJetsPuppi = process.tightJetIdLepVeto.clone(src = cms.InputTag("slimmedJetsPuppi"))
   process.slimmedJetsPuppiWithUserData = cms.EDProducer("PATJetUserDataEmbedder",
      src = cms.InputTag("slimmedJetsPuppi"),
      userFloats = cms.PSet(
        jercCHPUF = cms.InputTag("jercVarsAK4PFJetsPuppi:chargedHadronPUEnergyFraction"),
        jercCHF   = cms.InputTag("jercVarsAK4PFJetsPuppi:chargedHadronCHSEnergyFraction")
      ),
-     userInts = cms.PSet(),
+     userInts = cms.PSet(
+       tightId        = cms.InputTag("tightJetIdAK4PFJetsPuppi"),
+       tightIdLepVeto = cms.InputTag("tightJetIdLepVetoAK4PFJetsPuppi"),
+     ),
   )
+  for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
+    modifier.toModify(process.slimmedJetsPuppiWithUserData.userInts,
+      looseId = cms.InputTag("looseJetIdAK4PFJetsPuppi"),
+      tightIdLepVeto = None,
+    )
   jetVars_ak4PFJetsPuppi = jetVars.clone(
-    rawFactor = Var("1.-jecFactor('Uncorrected')", float, doc = "1 - Factor to get back to raw pT",                                     precision = 10),
-    jercCHPUF = Var("userFloat('jercCHPUF')",      float, doc = "Pileup Charged Hadron Energy Fraction with the JERC group definition", precision = 10),
-    jercCHF   = Var("userFloat('jercCHF')",        float, doc = "Charged Hadron Energy Fraction with the JERC group definition",        precision = 10),
+    rawFactor = Var("1.-jecFactor('Uncorrected')",                      float, doc = "1 - Factor to get back to raw pT",                                     precision = 10),
+    jetId     = Var("userInt('tightId')*2+4*userInt('tightIdLepVeto')", int,   doc = "Jet ID flags bit1 is loose, bit2 is tight, bit3 is tightLepVeto",      precision = 10),
+    jercCHPUF = Var("userFloat('jercCHPUF')",                           float, doc = "Pileup Charged Hadron Energy Fraction with the JERC group definition", precision = 10),
+    jercCHF   = Var("userFloat('jercCHF')",                             float, doc = "Charged Hadron Energy Fraction with the JERC group definition",        precision = 10),
   )
+  for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
+    modifier.toModify(jetVars_ak4PFJetsPuppi,
+      jetId = Var("userInt('tightId')*2+userInt('looseId')", int, doc = "Jet ID flags bit1 is loose, bit2 is tight", precision = 10)
+    )
   process.ak4PFJetsPuppiTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
     src       = cms.InputTag("slimmedJetsPuppiWithUserData"), # pT > 20 GeV
     cut       = cms.string(""),
@@ -135,8 +154,17 @@ def prepNanoAOD(process):
     variables = jetVars_ak4PFJetsPuppi,
   )
   process.ak4PFJetsPuppi_sequence = cms.Sequence(
-    process.jercVarsAK4PFJetsPuppi + process.slimmedJetsPuppiWithUserData + process.ak4PFJetsPuppiTable
+    process.jercVarsAK4PFJetsPuppi + process.tightJetIdAK4PFJetsPuppi + process.tightJetIdLepVetoAK4PFJetsPuppi + \
+    process.slimmedJetsPuppiWithUserData + process.ak4PFJetsPuppiTable
   )
+
+  _jetSequence_80X_ak4PFJetsPuppi = process.ak4PFJetsPuppi_sequence.copy()
+  _jetSequence_80X_ak4PFJetsPuppi.replace(process.tightJetIdLepVetoAK4PFJetsPuppi, process.looseJetIdAK4PFJetsPuppi)
+  run2_miniAOD_80XLegacy.toReplaceWith(process.ak4PFJetsPuppi_sequence, _jetSequence_80X_ak4PFJetsPuppi)
+
+  _jetSequence_94X2016_ak4PFJetsPuppi = process.ak4PFJetsPuppi_sequence.copy()
+  _jetSequence_94X2016_ak4PFJetsPuppi.replace(process.tightJetIdLepVetoAK4PFJetsPuppi, process.looseJetIdAK4PFJetsPuppi)
+  run2_nanoAOD_94X2016.toReplaceWith(process.ak4PFJetsPuppi_sequence, _jetSequence_94X2016_ak4PFJetsPuppi)
 
   process.nanoSequenceMC += process.chs_sequence + process.ak8PFJetsCHS_sequence + process.ak8PFJets_sequence + \
                             process.ak4PFJets_sequence + process.ak4PFJetsPuppi_sequence
