@@ -39,8 +39,9 @@ def prepNanoAOD(process):
   process.genJetAK8FlavourTable.cut = cms.string("") # 100 -> 80
 
   # prepare CHS
+  packedPFCandidates_str = "packedPFCandidates"
   process.chs = cms.EDFilter("CandPtrSelector",
-     src = cms.InputTag("packedPFCandidates"),
+     src = cms.InputTag(packedPFCandidates_str),
      cut = cms.string("fromPV"),
   )
 
@@ -64,12 +65,12 @@ def prepNanoAOD(process):
 
   # introduce AK8PFCHS collection
   process.ak8PFJetsCHS = ak8PFJetsCHS.clone(
-    src           = cms.InputTag("chs"),
+    src           = cms.InputTag(process.chs.label()),
     doAreaFastjet = True,
     jetPtMin      = cms.double(20.0),
   )
   process.ak8PFJetsCHSTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-    src       = cms.InputTag("ak8PFJetsCHS"),
+    src       = cms.InputTag(process.ak8PFJetsCHS.label()),
     cut       = cms.string(""),
     name      = cms.string("FatJetCHS"),
     doc       = cms.string("AK8PFCHS jets"),
@@ -81,12 +82,12 @@ def prepNanoAOD(process):
 
   # introduce AK8PF collection
   process.ak8PFJets = ak8PFJets.clone(
-    src           = cms.InputTag("packedPFCandidates"),
+    src           = cms.InputTag(packedPFCandidates_str),
     doAreaFastjet = True,
     jetPtMin      = cms.double(20.0),
   )
   process.ak8PFJetsTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-    src       = cms.InputTag("ak8PFJets"),
+    src       = cms.InputTag(process.ak8PFJets.label()),
     cut       = cms.string(""),
     name      = cms.string("FatJetPF"),
     doc       = cms.string("AK8PF jets"),
@@ -98,12 +99,12 @@ def prepNanoAOD(process):
 
   # introduce AK4PF collection
   process.ak4PFJets = ak4PFJets.clone(
-    src           = cms.InputTag("packedPFCandidates"),
+    src           = cms.InputTag(packedPFCandidates_str),
     doAreaFastjet = True,
     jetPtMin      = cms.double(10.0),
   )
   process.ak4PFJetsTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-    src       = cms.InputTag("ak4PFJets"),
+    src       = cms.InputTag(process.ak4PFJets.label()),
     cut       = cms.string(""),
     name      = cms.string("JetPF"),
     doc       = cms.string("AK4PF jets"),
@@ -114,24 +115,25 @@ def prepNanoAOD(process):
   process.ak4PFJets_sequence = cms.Sequence(process.ak4PFJets + process.ak4PFJetsTable)
 
   # introduce AK4PFPUPPI collection
-  process.jercVarsAK4PFJetsPuppi = process.jercVars.clone(srcJet = cms.InputTag("slimmedJetsPuppi"))
-  process.looseJetIdAK4PFJetsPuppi = process.looseJetId.clone(src = cms.InputTag("slimmedJetsPuppi"))
-  process.tightJetIdAK4PFJetsPuppi = process.tightJetId.clone(src = cms.InputTag("slimmedJetsPuppi"))
-  process.tightJetIdLepVetoAK4PFJetsPuppi = process.tightJetIdLepVeto.clone(src = cms.InputTag("slimmedJetsPuppi"))
+  slimmedJetsPuppi_str = "slimmedJetsPuppi"
+  process.jercVarsAK4PFJetsPuppi = process.jercVars.clone(srcJet = cms.InputTag(slimmedJetsPuppi_str))
+  process.looseJetIdAK4PFJetsPuppi = process.looseJetId.clone(src = cms.InputTag(slimmedJetsPuppi_str))
+  process.tightJetIdAK4PFJetsPuppi = process.tightJetId.clone(src = cms.InputTag(slimmedJetsPuppi_str))
+  process.tightJetIdLepVetoAK4PFJetsPuppi = process.tightJetIdLepVeto.clone(src = cms.InputTag(slimmedJetsPuppi_str))
   process.slimmedJetsPuppiWithUserData = cms.EDProducer("PATJetUserDataEmbedder",
-     src = cms.InputTag("slimmedJetsPuppi"),
+     src = cms.InputTag(slimmedJetsPuppi_str),
      userFloats = cms.PSet(
-       jercCHPUF = cms.InputTag("jercVarsAK4PFJetsPuppi:chargedHadronPUEnergyFraction"),
-       jercCHF   = cms.InputTag("jercVarsAK4PFJetsPuppi:chargedHadronCHSEnergyFraction")
+       jercCHPUF = cms.InputTag("%s:chargedHadronPUEnergyFraction"  % process.jercVarsAK4PFJetsPuppi.label()),
+       jercCHF   = cms.InputTag("%s:chargedHadronCHSEnergyFraction" % process.jercVarsAK4PFJetsPuppi.label())
      ),
      userInts = cms.PSet(
-       tightId        = cms.InputTag("tightJetIdAK4PFJetsPuppi"),
-       tightIdLepVeto = cms.InputTag("tightJetIdLepVetoAK4PFJetsPuppi"),
+       tightId        = cms.InputTag(process.tightJetIdAK4PFJetsPuppi.label()),
+       tightIdLepVeto = cms.InputTag(process.tightJetIdLepVetoAK4PFJetsPuppi.label()),
      ),
   )
   for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
     modifier.toModify(process.slimmedJetsPuppiWithUserData.userInts,
-      looseId = cms.InputTag("looseJetIdAK4PFJetsPuppi"),
+      looseId = cms.InputTag(process.looseJetIdAK4PFJetsPuppi.label()),
       tightIdLepVeto = None,
     )
   jetVars_ak4PFJetsPuppi = jetVars.clone(
@@ -145,7 +147,7 @@ def prepNanoAOD(process):
       jetId = Var("userInt('tightId')*2+userInt('looseId')", int, doc = "Jet ID flags bit1 is loose, bit2 is tight", precision = 10)
     )
   process.ak4PFJetsPuppiTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-    src       = cms.InputTag("slimmedJetsPuppiWithUserData"), # pT > 20 GeV
+    src       = cms.InputTag(process.slimmedJetsPuppiWithUserData.label()), # pT > 20 GeV
     cut       = cms.string(""),
     name      = cms.string("JetPUPPI"),
     doc       = cms.string("AK4PFPUPPI jets"),
