@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 from PhysicsTools.NanoAOD.common_cff import Var, P4Vars
+from PhysicsTools.NanoAOD.jets_cff import jetTable
 
 from RecoJets.JetProducers.PFJetParameters_cfi import PFJetParameters
 from RecoJets.JetProducers.GenJetParameters_cfi import GenJetParameters
@@ -14,28 +15,27 @@ from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cfi import updatedPatJets
 from PhysicsTools.PatAlgos.recoLayer0.jetCorrFactors_cfi import patJetCorrFactors
 
 #TODO: review pT thresholds
-#TODO: consider CALO, JPT jets
-#TODO: handle PUPPI method in JetAdder
+#TODO: consider CALO, JPT jets if possible
+#TODO: implement PUPPI method in JetAdder
 
-PRECISION = 10
 JETVARS = cms.PSet(P4Vars,
-  area      = Var("jetArea()",                                        float, doc = "jet catchment area, for JECs",                                         precision = PRECISION),
-  chHEF     = Var("chargedHadronEnergyFraction()",                    float, doc = "charged Hadron Energy Fraction",                                       precision = PRECISION),
-  neHEF     = Var("neutralHadronEnergyFraction()",                    float, doc = "neutral Hadron Energy Fraction",                                       precision = PRECISION),
-  chEmEF    = Var("chargedEmEnergyFraction()",                        float, doc = "charged Electromagnetic Energy Fraction",                              precision = PRECISION),
-  neEmEF    = Var("neutralEmEnergyFraction()",                        float, doc = "neutral Electromagnetic Energy Fraction",                              precision = PRECISION),
-  muEF      = Var("muonEnergyFraction()",                             float, doc = "muon Energy Fraction",                                                 precision = PRECISION),
-  HFHEF     = Var("HFHadronEnergyFraction()",                         float, doc = "energy fraction in forward hadronic calorimeter",                      precision = PRECISION),
-  HFEMEF    = Var("HFEMEnergyFraction()",                             float, doc = "energy fraction in forward EM calorimeter",                            precision = PRECISION),
-  rawFactor = Var("1.-jecFactor('Uncorrected')",                      float, doc = "1 - Factor to get back to raw pT",                                     precision = PRECISION),
-  jetId     = Var("userInt('tightId')*2+4*userInt('tightIdLepVeto')", int,   doc = "Jet ID flags bit1 is loose, bit2 is tight, bit3 is tightLepVeto",      precision = PRECISION),
-  jercCHPUF = Var("userFloat('jercCHPUF')",                           float, doc = "Pileup Charged Hadron Energy Fraction with the JERC group definition", precision = PRECISION),
-  jercCHF   = Var("userFloat('jercCHF')",                             float, doc = "Charged Hadron Energy Fraction with the JERC group definition",        precision = PRECISION),
+  HFHEF     = Var("HFHadronEnergyFraction()", float, doc = "energy fraction in forward hadronic calorimeter", precision = 10),
+  HFEMEF    = Var("HFEMEnergyFraction()",     float, doc = "energy fraction in forward EM calorimeter",       precision = 10),
+  area      = jetTable.variables.area,
+  chHEF     = jetTable.variables.chHEF,
+  neHEF     = jetTable.variables.neHEF,
+  chEmEF    = jetTable.variables.chEmEF,
+  neEmEF    = jetTable.variables.neEmEF,
+  muEF      = jetTable.variables.muEF,
+  rawFactor = jetTable.variables.rawFactor,
+  jetId     = jetTable.variables.jetId,
+  jercCHPUF = jetTable.variables.jercCHPUF,
+  jercCHF   = jetTable.variables.jercCHF,
 )
 
 for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
   modifier.toModify(JETVARS,
-    jetId = Var("userInt('tightId')*2+userInt('looseId')", int, doc = "Jet ID flags bit1 is loose, bit2 is tight", precision = PRECISION)
+    jetId = Var("userInt('tightId')*2+userInt('looseId')", int, doc = "Jet ID flags bit1 is loose, bit2 is tight")
   )
 
 import copy
@@ -69,12 +69,14 @@ class JetAdder(object):
     self.algoKey     = 'algo'
     self.sizeKey     = 'size'
     self.puMethodKey = 'puMethod'
-    self.jetRegex = re.compile(r'(?P<{algo}>({algoList}))(?P<{size}>[0-9]+)pf(?P<{puMethod}>(chs|puppi|sk|cs|))'.format(
-      algo     = self.algoKey,
-      algoList = '|'.join(self.algoMap.keys()),
-      size     = self.sizeKey,
-      puMethod = self.puMethodKey,
-    ))
+    self.jetRegex = re.compile(
+      r'(?P<{algo}>({algoList}))(?P<{size}>[0-9]+)pf(?P<{puMethod}>(chs|puppi|sk|cs|))'.format(
+        algo     = self.algoKey,
+        algoList = '|'.join(self.algoMap.keys()),
+        size     = self.sizeKey,
+        puMethod = self.puMethodKey,
+      )
+    )
 
   def getSequence(self, proc):
     resultSequence = cms.Sequence()
@@ -89,18 +91,19 @@ class JetAdder(object):
         name,
         doc,
         minPt = 5.,
-        inputCollection = "",
+        inputCollection    = "",
         bTagDiscriminators = None,
-        JETCorrLevels = None,
-        pfLabel = "packedPFCandidates",
-        pvLabel = "offlineSlimmedPrimaryVertices",
-        svLabel = "slimmedSecondaryVertices",
-        muLabel = "slimmedMuons",
-        elLabel = "slimmedElectrons",
-        gpLabel = "prunedGenParticles",
+        JETCorrLevels      = None,
+        pfLabel            = "packedPFCandidates",
+        pvLabel            = "offlineSlimmedPrimaryVertices",
+        svLabel            = "slimmedSecondaryVertices",
+        muLabel            = "slimmedMuons",
+        elLabel            = "slimmedElectrons",
+        gpLabel            = "prunedGenParticles",
       ):
 
     print("prepNanoAOD::JetAdder::addCollection: adding collection: {}".format(jet))
+    currentTasks = []
 
     if not bTagDiscriminators:
       bTagDiscriminators = self.bTagDiscriminators
@@ -110,6 +113,7 @@ class JetAdder(object):
     # decide which jet collection we're dealing with
     jetLower = jet.lower()
     jetUpper = jet.upper()
+
     jetMatch = self.jetRegex.match(jetLower)
     if not jetMatch:
       raise RuntimeError('Invalid jet collection: %s' % jet)
@@ -117,9 +121,7 @@ class JetAdder(object):
     jetSize     = jetMatch.group(self.sizeKey)
     jetPUMethod = jetMatch.group(self.puMethodKey)
 
-    jet_size_nr = float(jetSize) / 10.
-
-    currentTasks = []
+    jetSizeNr = float(jetSize) / 10.
 
     if not inputCollection:
       # set up PF candidates
@@ -156,7 +158,7 @@ class JetAdder(object):
             ),
             AnomalousCellParameters,
             jetAlgorithm = cms.string(self.algoMap[jetAlgo]),
-            rParam       = cms.double(jet_size_nr),
+            rParam       = cms.double(jetSizeNr),
           )
         )
         self.prerequisites.append(genPartNoNu)
@@ -174,7 +176,7 @@ class JetAdder(object):
           ),
           AnomalousCellParameters,
           jetAlgorithm  = cms.string(self.algoMap[jetAlgo]),
-          rParam        = cms.double(jet_size_nr),
+          rParam        = cms.double(jetSizeNr),
         )
       )
       currentTasks.append(jetCollection)
@@ -186,7 +188,7 @@ class JetAdder(object):
         labelName          = jetUpper,
         jetSource          = cms.InputTag(jetCollection),
         algo               = jetAlgo,
-        rParam             = jet_size_nr,
+        rParam             = jetSizeNr,
         pvSource           = cms.InputTag(pvLabel),
         pfCandidates       = cms.InputTag(pfLabel),
         svSource           = cms.InputTag(svLabel),
