@@ -3,8 +3,10 @@ import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import Var, P4Vars
 from RecoJets.JetProducers.ak8PFJets_cfi import ak8PFJetsCHS, ak8PFJets
 from RecoJets.JetProducers.ak4PFJets_cfi import ak4PFJets, ak4PFJetsPuppi
+from RecoJets.JetProducers.ak4GenJets_cfi import ak4GenJets
 from Configuration.Eras.Modifier_run2_miniAOD_80XLegacy_cff import run2_miniAOD_80XLegacy
 from Configuration.Eras.Modifier_run2_nanoAOD_94X2016_cff import run2_nanoAOD_94X2016
+from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection
 
 def prepNanoAOD(process):
   #TODO: review pT thresholds
@@ -44,8 +46,17 @@ def prepNanoAOD(process):
      src = cms.InputTag(packedPFCandidates_str),
      cut = cms.string("fromPV"),
   )
+  process.packedGenParticlesForJetsNoNu = cms.EDFilter("CandPtrSelector",
+     src = cms.InputTag("packedGenParticles"),
+     cut = cms.string("abs(pdgId) != 12 && abs(pdgId) != 14 && abs(pdgId) != 16"),
+   )
+  process.ak8GenJetsNoNu = ak4GenJets.clone(
+    rParam = cms.double(0.8),
+    src    = cms.InputTag(process.packedGenParticlesForJetsNoNu.label()),
+  )
+  lxCorrections = [ "L1FastJet", "L2Relative", "L3Absolute" ]
 
-  process.chs_sequence = cms.Sequence(process.chs)
+  process.prerequisites = cms.Sequence(process.chs + process.packedGenParticlesForJetsNoNu + process.ak8GenJetsNoNu)
 
   # prepare jet variables
   jetVars = cms.PSet(P4Vars,
@@ -63,20 +74,55 @@ def prepNanoAOD(process):
     jercCHF   = Var("0.",                            float, doc = "default",                                         precision = 10),
   )
 
+  bTagDiscriminators = [
+    'pfTrackCountingHighEffBJetTags',
+    'pfTrackCountingHighPurBJetTags',
+    'pfJetProbabilityBJetTags',
+    'pfJetBProbabilityBJetTags',
+    'pfSimpleSecondaryVertexHighEffBJetTags',
+    'pfSimpleSecondaryVertexHighPurBJetTags',
+    'pfCombinedSecondaryVertexV2BJetTags',
+    'pfCombinedInclusiveSecondaryVertexV2BJetTags',
+    'pfCombinedMVAV2BJetTags',
+    'pfDeepCSVJetTags:probb',
+    'pfDeepCSVJetTags:probbb',
+    'pfBoostedDoubleSecondaryVertexAK8BJetTags',
+  ]
+
   # introduce AK8PFCHS collection
   process.ak8PFJetsCHS = ak8PFJetsCHS.clone(
     src           = cms.InputTag(process.chs.label()),
     doAreaFastjet = True,
-    jetPtMin      = cms.double(20.0),
+    jetPtMin      = cms.double(50.0),
+  )
+  # PATify
+  addJetCollection(
+    process,
+    labelName          = "AK8PFJetsCHS",
+    jetSource          = cms.InputTag(process.ak8PFJetsCHS.label()),
+    algo               = "ak",
+    rParam             = 0.8, #NB! expects the raw float type
+    pvSource           = cms.InputTag("offlineSlimmedPrimaryVertices"),
+    pfCandidates       = cms.InputTag(packedPFCandidates_str),
+    svSource           = cms.InputTag("slimmedSecondaryVertices"),
+    muSource           = cms.InputTag("slimmedMuons"),
+    elSource           = cms.InputTag("slimmedElectrons"),
+    btagDiscriminators = bTagDiscriminators,
+    jetCorrections     = ("AK8PFchs", lxCorrections, "None"),
+    genJetCollection   = cms.InputTag(process.ak8GenJetsNoNu.label()),
+    genParticles       = cms.InputTag("prunedGenParticles"),
+  )
+  jetVars_ak8PFJetsCHS = jetVars.clone(
+    rawFactor = Var("1.-jecFactor('Uncorrected')", float, doc = "1 - Factor to get back to raw pT", precision = 10),
   )
   process.ak8PFJetsCHSTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-    src       = cms.InputTag(process.ak8PFJetsCHS.label()),
+    src       = cms.InputTag("selectedPatJetsAK8PFJetsCHS"),
     cut       = cms.string(""),
     name      = cms.string("FatJetCHS"),
     doc       = cms.string("AK8PFCHS jets"),
     singleton = cms.bool(False),
     extension = cms.bool(False),
-    variables = jetVars.clone(),
+    variables = jetVars_ak8PFJetsCHS,
   )
   process.ak8PFJetsCHS_sequence = cms.Sequence(process.ak8PFJetsCHS + process.ak8PFJetsCHSTable)
 
@@ -168,5 +214,5 @@ def prepNanoAOD(process):
   _jetSequence_94X2016_ak4PFJetsPuppi.replace(process.tightJetIdLepVetoAK4PFJetsPuppi, process.looseJetIdAK4PFJetsPuppi)
   run2_nanoAOD_94X2016.toReplaceWith(process.ak4PFJetsPuppi_sequence, _jetSequence_94X2016_ak4PFJetsPuppi)
 
-  process.nanoSequenceMC += process.chs_sequence + process.ak8PFJetsCHS_sequence + process.ak8PFJets_sequence + \
+  process.nanoSequenceMC += process.prerequisites + process.ak8PFJetsCHS_sequence + process.ak8PFJets_sequence + \
                             process.ak4PFJets_sequence + process.ak4PFJetsPuppi_sequence
