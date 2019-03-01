@@ -66,6 +66,7 @@ class JetAdder(object):
     self.algoMap = {
       "ak" : "AntiKt",
       "ca" : "CambridgeAachen",
+      "kt" : "Kt",
     }
     self.algoKey     = 'algo'
     self.sizeKey     = 'size'
@@ -108,7 +109,9 @@ class JetAdder(object):
 
     if name in [ "Jet", "FatJet" ]:
       raise RuntimeError("Name already taken: %s" % name)
-    if inputCollection and inputCollection not in [ "slimmedJets", "slimmedJetsAK8", "slimmedJetsPuppi" ]:
+    if inputCollection and inputCollection not in [
+          "slimmedJets", "slimmedJetsAK8", "slimmedJetsPuppi",
+        ]:
       raise RuntimeError("Invalid input collection: %s" % inputCollection)
 
     if not bTagDiscriminators:
@@ -207,7 +210,7 @@ class JetAdder(object):
       )
       selJet = "selectedPatJets{}".format(jetUpper)
     else:
-      selJet = "slimmedJetsPuppi"
+      selJet = inputCollection
 
     jercVar = "jercVars{}".format(jetUpper)
     if jercVar in self.main:
@@ -256,6 +259,13 @@ class JetAdder(object):
       )
     currentTasks.append(selectedPatJetsWithUserData)
 
+    # Not sure why we can't re-use patJetCorrFactors* created by addJetCollection() (even cloning doesn't work)
+    # Let's just create our own
+    jetCorrPayload = "{}{}PF".format(jetAlgo.upper(), jetSize)
+    if jetPUMethod == "puppi":
+      jetCorrPayload += "Puppi"
+    else:
+      jetCorrPayload += jetPUMethod.lower()
     jetCorrFactors = "jetCorrFactors{}".format(jetUpper)
     if jetCorrFactors in self.main:
       raise ValueError("Step '%s' already implemented" % jetCorrFactors)
@@ -263,6 +273,7 @@ class JetAdder(object):
         src             = selectedPatJetsWithUserData,
         levels          = cms.vstring(JETCorrLevels),
         primaryVertices = cms.InputTag(pvLabel),
+        payload         = cms.string(jetCorrPayload),
       )
     )
     currentTasks.append(jetCorrFactors)
@@ -340,7 +351,7 @@ def prepNanoAOD(process):
   process.genJetAK8FlavourTable.cut = cms.string("") # 100 -> 80
 
   ja = JetAdder()
-  ja.addCollection(process, jet = "ak4pfpuppi", name = "JetPUPPI",  doc = "AK4PFPUPPI jets", inputCollection = "slimmedJetsPuppi")
+  ja.addCollection(process, jet = "ak4pfpuppi", name = "JetPUPPI",  doc = "AK4PFPUPPI jets", inputCollection = "slimmedJetsPuppi") # pT > 20
   ja.addCollection(process, jet = "ak4pf",      name = "JetPF",     doc = "AK4PF jets",      minPt = 10.)
   ja.addCollection(process, jet = "ak8pfchs",   name = "FatJetCHS", doc = "AK8PFCHS jets",   minPt = 50.)
   ja.addCollection(process, jet = "ak8pf",      name = "FatJetPF",  doc = "AK8PF jets",      minPt = 20.)
