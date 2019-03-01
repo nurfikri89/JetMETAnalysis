@@ -17,6 +17,7 @@ from PhysicsTools.PatAlgos.recoLayer0.jetCorrFactors_cfi import patJetCorrFactor
 #TODO: review pT thresholds
 #TODO: consider CALO, JPT jets if possible
 #TODO: implement PUPPI method in JetAdder
+#TODO: add gen jet collections to the output Ntuple
 
 JETVARS = cms.PSet(P4Vars,
   HFHEF     = Var("HFHadronEnergyFraction()", float, doc = "energy fraction in forward hadronic calorimeter", precision = 10),
@@ -104,6 +105,11 @@ class JetAdder(object):
 
     print("prepNanoAOD::JetAdder::addCollection: adding collection: {}".format(jet))
     currentTasks = []
+
+    if name in [ "Jet", "FatJet" ]:
+      raise RuntimeError("Name already taken: %s" % name)
+    if inputCollection and inputCollection not in [ "slimmedJets", "slimmedJetsAK8", "slimmedJetsPuppi" ]:
+      raise RuntimeError("Invalid input collection: %s" % inputCollection)
 
     if not bTagDiscriminators:
       bTagDiscriminators = self.bTagDiscriminators
