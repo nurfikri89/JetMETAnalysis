@@ -15,7 +15,7 @@ from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cfi import updatedPatJets
 from PhysicsTools.PatAlgos.recoLayer0.jetCorrFactors_cfi import patJetCorrFactors
 
 #TODO: review pT thresholds
-#TODO: consider CALO, JPT jets if possible
+#TODO: consider JPT jets if possible
 #TODO: implement PUPPI method in JetAdder
 #TODO: add gen jet collections to the output Ntuple
 
@@ -131,8 +131,17 @@ class JetAdder(object):
     jetSizeNr = float(jetSize) / 10.
 
     doCalo = jetReco == "calo"
-    if doCalo:
-      assert(inputCollection)
+    if jetLower == "ak4calo":
+      assert(inputCollection == "slimmedCaloJets")
+
+    if inputCollection == "slimmedJets":
+      assert(jetLower == "ak4pfchs")
+    elif inputCollection == "slimmedJetsAK8":
+      assert(jetLower == "ak8pfpuppi")
+    elif inputCollection == "slimmedJetsPuppi":
+      assert(jetLower == "ak4pfpuppi")
+    elif inputCollection == "slimmedCaloJets":
+      assert(jetLower == "ak4calo")
 
     if not inputCollection or doCalo:
       # set up PF candidates
