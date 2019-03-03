@@ -19,7 +19,6 @@ from CommonTools.PileupAlgos.Puppi_cff import puppi
 import copy
 import re
 
-#TODO: review pT thresholds
 #TODO: add gen jet collections to the output Ntuple
 
 JETVARS = cms.PSet(P4Vars,
@@ -103,7 +102,12 @@ class JetAdder(object):
         postfix            = "",
       ):
 
-    print("prepNanoAOD::JetAdder::addCollection: adding collection: {} (postfix = '{}')".format(jet, postfix))
+    print(
+      "prepNanoAOD::JetAdder::addCollection: adding collection: {}{}".format(
+        jet,
+        " ({})".format(postfix) if postfix else "",
+      )
+    )
     currentTasks = []
 
     if name in [ "Jet", "FatJet" ]:
@@ -113,9 +117,9 @@ class JetAdder(object):
         ]:
       raise RuntimeError("Invalid input collection: %s" % inputCollection)
 
-    if not bTagDiscriminators:
+    if bTagDiscriminators is None:
       bTagDiscriminators = self.bTagDiscriminators
-    if not JETCorrLevels:
+    if JETCorrLevels is None:
       JETCorrLevels = self.JETCorrLevels
 
     # decide which jet collection we're dealing with
@@ -135,8 +139,6 @@ class JetAdder(object):
 
     doCalo = jetReco == "calo"
     skipUserData = doCalo or (jetPUMethod == "puppi" and inputCollection == "")
-    if jetLower == "ak4calo":
-      assert(inputCollection == "slimmedCaloJets")
 
     if inputCollection == "slimmedJets":
       assert(jetLower == "ak4pfchs")
@@ -400,10 +402,38 @@ def prepNanoAOD(process):
   ######################################################################################################################
 
   ja = JetAdder()
-  ja.addCollection(process, jet = "ak4pfpuppi", name = "JetPUPPI",    doc = "AK4PFPUPPI jets", inputCollection = "slimmedJetsPuppi") # pT > 20
+
+  # standard jets
   ja.addCollection(process, jet = "ak4pf",      name = "JetPF",       doc = "AK4PF jets",      minPt = 10.)
-  ja.addCollection(process, jet = "ak8pfchs",   name = "FatJetCHS",   doc = "AK8PFCHS jets",   minPt = 50.)
-  ja.addCollection(process, jet = "ak8pf",      name = "FatJetPF",    doc = "AK8PF jets",      minPt = 50.)
-  ja.addCollection(process, jet = "ak4calo",    name = "CaloJet",     doc = "AK4Calo jets",    inputCollection = "slimmedCaloJets") # pT > 20
   ja.addCollection(process, jet = "ak4pfpuppi", name = "AK4JetPUPPI", doc = "AK4PFPUPPI jets", postfix = "Rebuild")
+  ja.addCollection(process, jet = "ak4pfpuppi", name = "JetPUPPI",    doc = "AK4PFPUPPI jets", inputCollection = "slimmedJetsPuppi") # pT > 20
+  ja.addCollection(process, jet = "ak4calo",    name = "CaloJet",     doc = "AK4Calo jets",    inputCollection = "slimmedCaloJets") # pT > 20
+  ja.addCollection(process, jet = "ak8pf",      name = "FatJetPF",    doc = "AK8PF jets")
+  ja.addCollection(process, jet = "ak8pfchs",   name = "FatJetCHS",   doc = "AK8PFCHS jets")
+
+  # non-standard jets
+  ja.addCollection(process, jet = "ak1pf"   ,   name = "AK1PFJet",    doc = "AK1PF jets")
+  ja.addCollection(process, jet = "ak1pfchs",   name = "AK1Jet",      doc = "AK1PFCHS jets")
+  ja.addCollection(process, jet = "ak2pf"   ,   name = "AK2PFJet",    doc = "AK2PF jets")
+  ja.addCollection(process, jet = "ak2pfchs",   name = "AK2Jet",      doc = "AK2PFCHS jets")
+  ja.addCollection(process, jet = "ak5pf",      name = "AK5PFJet",    doc = "AK5PF jets")
+  ja.addCollection(process, jet = "ak5pfchs",   name = "AK5Jet",      doc = "AK5PFCHS jets")
+  ja.addCollection(process, jet = "ak6pf"   ,   name = "AK6PFJet",    doc = "AK6PF jets")
+  ja.addCollection(process, jet = "ak6pfchs",   name = "AK6Jet",      doc = "AK6PFCHS jets")
+  ja.addCollection(process, jet = "ak7pf"   ,   name = "AK7PFJet",    doc = "AK7PF jets")
+  ja.addCollection(process, jet = "ak7pfchs",   name = "AK7Jet",      doc = "AK7PFCHS jets")
+  ja.addCollection(process, jet = "ak9pf"   ,   name = "AK9PFJet",    doc = "AK9PF jets")
+  ja.addCollection(process, jet = "ak9pfchs",   name = "AK9Jet",      doc = "AK9PFCHS jets")
+  ja.addCollection(process, jet = "ak10pf"   ,  name = "AK10PFJet",   doc = "AK10PF jets")
+  ja.addCollection(process, jet = "ak10pfchs",  name = "AK10Jet",     doc = "AK10PFCHS jets")
+
+  # need to use empty list of JEC levels, otherwise would get this error:
+  # cannot find key 1 in the JEC payload, this usually means you have to change the global tag
+  ja.addCollection(process, jet = "kt4pf",      name = "Kt4Jet",      doc = "KT4PF jets",      JETCorrLevels = [])
+  ja.addCollection(process, jet = "kt6pf",      name = "Kt6Jet",      doc = "KT6PF jets",      JETCorrLevels = [])
+
+  # ca would be possible if its corrections were available in JetCorrectionsRecord/GT
+  # in principle, could use some other jet corrections since the jet collection is non-standard anyways
+
   process.nanoSequenceMC += ja.getSequence(process)
+
