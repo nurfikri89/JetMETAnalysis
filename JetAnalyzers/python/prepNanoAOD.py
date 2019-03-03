@@ -19,8 +19,6 @@ from CommonTools.PileupAlgos.Puppi_cff import puppi
 import copy
 import re
 
-#TODO: add gen jet collections to the output Ntuple
-
 JETVARS = cms.PSet(P4Vars,
   HFHEF     = Var("HFHadronEnergyFraction()", float, doc = "energy fraction in forward hadronic calorimeter", precision = 10),
   HFEMEF    = Var("HFEMEnergyFraction()",     float, doc = "energy fraction in forward EM calorimeter",       precision = 10),
@@ -255,6 +253,12 @@ class JetAdder(object):
       setattr(getattr(proc, "patJetCorrFactors{}".format(tagName)), "payload",         cms.string(jetCorrPayload))
       selJet = "selectedPatJets{}".format(tagName)
     else:
+      if inputCollection in [ "slimmedJets", "slimmedJetsPuppi", "slimmedCaloJets" ]:
+        genPartNoNu = "slimmedGenJets"
+      elif inputCollection in [ "slimmedJetsAK8" ]:
+        genPartNoNu = "slimmedGenJetsAK8"
+      else:
+        raise RuntimeError("Internal error")
       selJet = inputCollection
 
     if not skipUserData:
@@ -351,6 +355,21 @@ class JetAdder(object):
       )
     )
     currentTasks.append(table)
+    
+    genTable = "{}GenTable".format(tagName)
+    if genTable in self.main:
+      raise ValueError("Step '%s' already implemented" % genTable)
+    setattr(proc, genTable, cms.EDProducer("SimpleCandidateFlatTableProducer",
+        src       = cms.InputTag(genPartNoNu),
+        cut       = cms.string(""),
+        name      = cms.string('Gen{}'.format(name)),
+        doc       = cms.string('{} (generator level)'.format(doc)),
+        singleton = cms.bool(False),
+        extension = cms.bool(False),
+        variables = cms.PSet(P4Vars),
+      )
+    )
+    currentTasks.append(genTable)
 
     if not skipUserData:
       altTasks = copy.deepcopy(currentTasks)
