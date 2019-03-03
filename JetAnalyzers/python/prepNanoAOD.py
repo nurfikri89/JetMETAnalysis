@@ -14,9 +14,12 @@ from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection, supportedJetA
 from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cfi import updatedPatJets
 from PhysicsTools.PatAlgos.recoLayer0.jetCorrFactors_cfi import patJetCorrFactors
 
+from CommonTools.PileupAlgos.Puppi_cff import puppi
+
+import copy
+import re
+
 #TODO: review pT thresholds
-#TODO: consider JPT jets if possible
-#TODO: implement PUPPI method in JetAdder
 #TODO: add gen jet collections to the output Ntuple
 
 JETVARS = cms.PSet(P4Vars,
@@ -38,9 +41,6 @@ for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016:
   modifier.toModify(JETVARS,
     jetId = Var("userInt('tightId')*2+userInt('looseId')", int, doc = "Jet ID flags bit1 is loose, bit2 is tight")
   )
-
-import copy
-import re
 
 class JetAdder(object):
   def __init__(self):
@@ -77,6 +77,13 @@ class JetAdder(object):
       )
     )
 
+    self.pfLabel = "packedPFCandidates"
+    self.pvLabel = "offlineSlimmedPrimaryVertices"
+    self.svLabel = "slimmedSecondaryVertices"
+    self.muLabel = "slimmedMuons"
+    self.elLabel = "slimmedElectrons"
+    self.gpLabel = "prunedGenParticles"
+
   def getSequence(self, proc):
     resultSequence = cms.Sequence()
     tasks = self.prerequisites + self.main
@@ -89,19 +96,14 @@ class JetAdder(object):
         jet,
         name,
         doc,
-        minPt = 5.,
+        minPt              = 5.,
         inputCollection    = "",
         bTagDiscriminators = None,
         JETCorrLevels      = None,
-        pfLabel            = "packedPFCandidates",
-        pvLabel            = "offlineSlimmedPrimaryVertices",
-        svLabel            = "slimmedSecondaryVertices",
-        muLabel            = "slimmedMuons",
-        elLabel            = "slimmedElectrons",
-        gpLabel            = "prunedGenParticles",
+        postfix            = "",
       ):
 
-    print("prepNanoAOD::JetAdder::addCollection: adding collection: {}".format(jet))
+    print("prepNanoAOD::JetAdder::addCollection: adding collection: {} (postfix = '{}')".format(jet, postfix))
     currentTasks = []
 
     if name in [ "Jet", "FatJet" ]:
@@ -119,6 +121,7 @@ class JetAdder(object):
     # decide which jet collection we're dealing with
     jetLower = jet.lower()
     jetUpper = jet.upper()
+    tagName = "{}{}".format(jetUpper, postfix)
 
     jetMatch = self.jetRegex.match(jetLower)
     if not jetMatch:
@@ -131,6 +134,7 @@ class JetAdder(object):
     jetSizeNr = float(jetSize) / 10.
 
     doCalo = jetReco == "calo"
+    skipUserData = doCalo or (jetPUMethod == "puppi" and inputCollection == "")
     if jetLower == "ak4calo":
       assert(inputCollection == "slimmedCaloJets")
 
@@ -142,18 +146,32 @@ class JetAdder(object):
       assert(jetLower == "ak4pfpuppi")
     elif inputCollection == "slimmedCaloJets":
       assert(jetLower == "ak4calo")
+    
+    jetCorrPayload = "{}{}{}".format(jetAlgo.upper(), jetSize, "Calo" if doCalo else jetReco.upper())
+    if jetPUMethod == "puppi":
+      jetCorrPayload += "Puppi"
+    else:
+      jetCorrPayload += jetPUMethod.lower()
 
     if not inputCollection or doCalo:
       # set up PF candidates
-      pfCand = "{}{}".format(pfLabel, jetPUMethod)
+      pfCand = "{}{}".format(self.pfLabel, jetPUMethod)
       if pfCand not in self.prerequisites:
         if jetPUMethod == "":
           pass
         elif jetPUMethod == "chs":
           setattr(proc, pfCand,
             cms.EDFilter("CandPtrSelector",
-              src = cms.InputTag(pfLabel),
+              src = cms.InputTag(self.pfLabel),
               cut = cms.string("fromPV"),
+            )
+          )
+          self.prerequisites.append(pfCand)
+        elif jetPUMethod == "puppi":
+          setattr(proc, pfCand,
+            puppi.clone(
+              candName   = cms.InputTag(self.pfLabel),
+              vertexName = cms.InputTag(self.pvLabel),
             )
           )
           self.prerequisites.append(pfCand)
@@ -185,7 +203,7 @@ class JetAdder(object):
 
       # create the recojet collection
       if not doCalo:
-        jetCollection = '{}Collection'.format(jetUpper)
+        jetCollection = '{}Collection'.format(tagName)
         if jetCollection in self.main:
           raise ValueError("Step '%s' already implemented" % jetCollection)
         setattr(proc, jetCollection,
@@ -206,50 +224,56 @@ class JetAdder(object):
 
       # PATify
       jetCorrections = (
-        "{}{}{}{}".format(jetAlgo.upper(), jetSize, "Calo" if doCalo else jetReco.upper(), jetPUMethod.lower()),
+        "{}{}{}{}".format(
+          jetAlgo.upper(),
+          jetSize,
+          "Calo" if doCalo else jetReco.upper(),
+          "Puppi" if jetPUMethod == "puppi" else jetPUMethod.lower()
+        ),
         JETCorrLevels,
         "None",
       )
       addJetCollection(
         proc,
-        labelName          = jetUpper,
+        labelName          = tagName,
         jetSource          = cms.InputTag(jetCollection),
         algo               = jetAlgo,
         rParam             = jetSizeNr,
-        pvSource           = cms.InputTag(pvLabel),
-        pfCandidates       = cms.InputTag(pfLabel),
-        svSource           = cms.InputTag(svLabel),
-        muSource           = cms.InputTag(muLabel),
-        elSource           = cms.InputTag(elLabel),
+        pvSource           = cms.InputTag(self.pvLabel),
+        pfCandidates       = cms.InputTag(self.pfLabel),
+        svSource           = cms.InputTag(self.svLabel),
+        muSource           = cms.InputTag(self.muLabel),
+        elSource           = cms.InputTag(self.elLabel),
         btagDiscriminators = bTagDiscriminators if not doCalo else [ "None" ],
         jetCorrections     = jetCorrections,
         genJetCollection   = cms.InputTag(genPartNoNu),
-        genParticles       = cms.InputTag(gpLabel),
+        genParticles       = cms.InputTag(self.gpLabel),
       )
-      setattr(getattr(proc, "patJets{}".format(jetUpper)), "getJetMCFlavour", cms.bool(not doCalo))
-      selJet = "selectedPatJets{}".format(jetUpper)
+      setattr(getattr(proc, "patJets{}".format(tagName)),           "getJetMCFlavour", cms.bool(not doCalo))
+      setattr(getattr(proc, "patJetCorrFactors{}".format(tagName)), "payload",         cms.string(jetCorrPayload))
+      selJet = "selectedPatJets{}".format(tagName)
     else:
       selJet = inputCollection
 
-    if not doCalo:
-      jercVar = "jercVars{}".format(jetUpper)
+    if not skipUserData:
+      jercVar = "jercVars{}".format(tagName)
       if jercVar in self.main:
         raise ValueError("Step '%s' already implemented" % jercVar)
       setattr(proc, jercVar, proc.jercVars.clone(srcJet = cms.InputTag(selJet)))
       currentTasks.append(jercVar)
 
-      looseJetId = "looseJetId{}".format(jetUpper)
+      looseJetId = "looseJetId{}".format(tagName)
       if looseJetId in self.main:
         raise ValueError("Step '%s' already implemented" % looseJetId)
       setattr(proc, looseJetId, proc.looseJetId.clone(src = cms.InputTag(selJet)))
 
-      tightJetId = "tightJetId{}".format(jetUpper)
+      tightJetId = "tightJetId{}".format(tagName)
       if tightJetId in self.main:
         raise ValueError("Step '%s' already implemented" % tightJetId)
       setattr(proc, tightJetId, proc.tightJetId.clone(src = cms.InputTag(selJet)))
       currentTasks.append(tightJetId)
 
-      tightJetIdLepVeto = "tightJetIdLepVeto{}".format(jetUpper)
+      tightJetIdLepVeto = "tightJetIdLepVeto{}".format(tagName)
       if tightJetIdLepVeto in self.main:
         raise ValueError("Step '%s' already implemented" % tightJetIdLepVeto)
       setattr(proc, tightJetIdLepVeto, proc.tightJetIdLepVeto.clone(src = cms.InputTag(selJet)))
@@ -279,29 +303,24 @@ class JetAdder(object):
         )
       currentTasks.append(selectedPatJetsWithUserData)
     else:
-      selectedPatJetsWithUserData = "selectedPatJets{}".format(jetUpper)
+      selectedPatJetsWithUserData = "selectedPatJets{}".format(tagName)
 
     # Not sure why we can't re-use patJetCorrFactors* created by addJetCollection() (even cloning doesn't work)
     # Let's just create our own
-    jetCorrPayload = "{}{}{}".format(jetAlgo.upper(), jetSize, "Calo" if doCalo else jetReco.upper())
-    if jetPUMethod == "puppi":
-      jetCorrPayload += "Puppi"
-    else:
-      jetCorrPayload += jetPUMethod.lower()
-    jetCorrFactors = "jetCorrFactors{}".format(jetUpper)
+    jetCorrFactors = "jetCorrFactors{}".format(tagName)
     if jetCorrFactors in self.main:
       raise ValueError("Step '%s' already implemented" % jetCorrFactors)
     setattr(proc, jetCorrFactors, patJetCorrFactors.clone(
         src             = selectedPatJetsWithUserData,
         levels          = cms.vstring(JETCorrLevels),
-        primaryVertices = cms.InputTag(pvLabel),
+        primaryVertices = cms.InputTag(self.pvLabel),
         payload         = cms.string(jetCorrPayload),
         rho             = "fixedGridRhoFastjetAll{}".format("Calo" if doCalo else ""),
       )
     )
     currentTasks.append(jetCorrFactors)
 
-    updatedJets = "updatedJets{}".format(jetUpper)
+    updatedJets = "updatedJets{}".format(tagName)
     if updatedJets in self.main:
       raise ValueError("Step '%s' already implemented" % updatedJets)
     setattr(proc, updatedJets, updatedPatJets.clone(
@@ -312,7 +331,7 @@ class JetAdder(object):
     )
     currentTasks.append(updatedJets)
 
-    table = "{}Table".format(jetUpper)
+    table = "{}Table".format(tagName)
     if table in self.main:
       raise ValueError("Step '%s' already implemented" % table)
     setattr(proc, table, cms.EDProducer("SimpleCandidateFlatTableProducer",
@@ -322,7 +341,7 @@ class JetAdder(object):
         doc       = cms.string(doc),
         singleton = cms.bool(False),
         extension = cms.bool(False),
-        variables = JETVARS.clone() if not doCalo else cms.PSet(
+        variables = JETVARS.clone() if not skipUserData else cms.PSet(
           P4Vars,
           area = jetTable.variables.area,
           rawFactor = jetTable.variables.rawFactor,
@@ -331,7 +350,7 @@ class JetAdder(object):
     )
     currentTasks.append(table)
 
-    if not doCalo:
+    if not skipUserData:
       altTasks = copy.deepcopy(currentTasks)
       for idx, task in enumerate(altTasks):
         if task == tightJetIdLepVeto:
@@ -381,9 +400,10 @@ def prepNanoAOD(process):
   ######################################################################################################################
 
   ja = JetAdder()
-  ja.addCollection(process, jet = "ak4pfpuppi", name = "JetPUPPI",  doc = "AK4PFPUPPI jets", inputCollection = "slimmedJetsPuppi") # pT > 20
-  ja.addCollection(process, jet = "ak4pf",      name = "JetPF",     doc = "AK4PF jets",      minPt = 10.)
-  ja.addCollection(process, jet = "ak8pfchs",   name = "FatJetCHS", doc = "AK8PFCHS jets",   minPt = 50.)
-  ja.addCollection(process, jet = "ak8pf",      name = "FatJetPF",  doc = "AK8PF jets",      minPt = 20.)
-  ja.addCollection(process, jet = "ak4calo",    name = "CaloJet",   doc = "AK4Calo jets",    inputCollection = "slimmedCaloJets") # pT > 20
+  ja.addCollection(process, jet = "ak4pfpuppi", name = "JetPUPPI",    doc = "AK4PFPUPPI jets", inputCollection = "slimmedJetsPuppi") # pT > 20
+  ja.addCollection(process, jet = "ak4pf",      name = "JetPF",       doc = "AK4PF jets",      minPt = 10.)
+  ja.addCollection(process, jet = "ak8pfchs",   name = "FatJetCHS",   doc = "AK8PFCHS jets",   minPt = 50.)
+  ja.addCollection(process, jet = "ak8pf",      name = "FatJetPF",    doc = "AK8PF jets",      minPt = 50.)
+  ja.addCollection(process, jet = "ak4calo",    name = "CaloJet",     doc = "AK4Calo jets",    inputCollection = "slimmedCaloJets") # pT > 20
+  ja.addCollection(process, jet = "ak4pfpuppi", name = "AK4JetPUPPI", doc = "AK4PFPUPPI jets", postfix = "Rebuild")
   process.nanoSequenceMC += ja.getSequence(process)
