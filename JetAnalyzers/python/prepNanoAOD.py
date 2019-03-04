@@ -22,45 +22,89 @@ import re
 
 # the following collections have only 4-momentum, scale factor and jet area stored:
 # ak4calo, ak4pfpuppi (no input collection), ak8pfpuppi (no input collection), ak4pfsk
-CONFIG = [
+config = [
   # standard jets
   { "jet" : "ak4pf",      "enabled" : True,  "name" : "JetPF",           "doc" : "AK4PF jets",      "minPt" : 10. },
   { "jet" : "ak4pfpuppi", "enabled" : True,  "name" : "JetPUPPI",        "doc" : "AK4PFPUPPI jets", "inputCollection" : "slimmedJetsPuppi" }, # pT > 20
-  { "jet" : "ak4calo",    "enabled" : True,  "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
+  { "jet" : "ak4calo",    "enabled" : False, "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
   { "jet" : "ak8pf",      "enabled" : True,  "name" : "FatJetPF",        "doc" : "AK8PF jets" },
   { "jet" : "ak8pfchs",   "enabled" : True,  "name" : "FatJetCHS",       "doc" : "AK8PFCHS jets" },
   # standard jets, reconstruction algorithm rerun
-  { "jet" : "ak4pfchs",   "enabled" : True,  "name" : "JetRebuilt",      "doc" : "AK4PFCHS jets",   "postfix" : "Rebuilt" },
-  { "jet" : "ak4pfpuppi", "enabled" : True,  "name" : "JetPUPPIRebuilt", "doc" : "AK4PFPUPPI jets", "postfix" : "Rebuilt" },
-  { "jet" : "ak8pfpuppi", "enabled" : True,  "name" : "FatJetRebuilt",   "doc" : "AK8PFPUPPI jets", "postfix" : "Rebuilt" },
+  { "jet" : "ak4pfchs",   "enabled" : False, "name" : "JetRebuilt",      "doc" : "AK4PFCHS jets",   "postfix" : "Rebuilt" },
+  { "jet" : "ak4pfpuppi", "enabled" : False, "name" : "JetPUPPIRebuilt", "doc" : "AK4PFPUPPI jets", "postfix" : "Rebuilt" },
+  { "jet" : "ak8pfpuppi", "enabled" : False, "name" : "FatJetRebuilt",   "doc" : "AK8PFPUPPI jets", "postfix" : "Rebuilt" },
   # non-standard jets
-  { "jet" : "ak1pf",      "enabled" : True,  "name" : "AK1PFJet",        "doc" : "AK1PF jets" },
-  { "jet" : "ak1pfchs",   "enabled" : True,  "name" : "AK1Jet",          "doc" : "AK1PFCHS jets" },
-  { "jet" : "ak2pf",      "enabled" : True,  "name" : "AK2PFJet",        "doc" : "AK2PF jets" },
-  { "jet" : "ak2pfchs",   "enabled" : True,  "name" : "AK2Jet",          "doc" : "AK2PFCHS jets" },
-  { "jet" : "ak5pf",      "enabled" : True,  "name" : "AK5PFJet",        "doc" : "AK5PF jets" },
-  { "jet" : "ak5pfchs",   "enabled" : True,  "name" : "AK5Jet",          "doc" : "AK5PFCHS jets" },
-  { "jet" : "ak6pf",      "enabled" : True,  "name" : "AK6PFJet",        "doc" : "AK6PF jets" },
-  { "jet" : "ak6pfchs",   "enabled" : True,  "name" : "AK6Jet",          "doc" : "AK6PFCHS jets" },
-  { "jet" : "ak7pf",      "enabled" : True,  "name" : "AK7PFJet",        "doc" : "AK7PF jets" },
-  { "jet" : "ak7pfchs",   "enabled" : True,  "name" : "AK7Jet",          "doc" : "AK7PFCHS jets" },
-  { "jet" : "ak9pf",      "enabled" : True,  "name" : "AK9PFJet",        "doc" : "AK9PF jets" },
-  { "jet" : "ak9pfchs",   "enabled" : True,  "name" : "AK9Jet",          "doc" : "AK9PFCHS jets" },
-  { "jet" : "ak10pf",     "enabled" : True,  "name" : "AK10PFJet",       "doc" : "AK10PF jets" },
-  { "jet" : "ak10pfchs",  "enabled" : True,  "name" : "AK10Jet",         "doc" : "AK10PFCHS jets" },
+  { "jet" : "ak1pf",      "enabled" : False, "name" : "AK1PFJet",        "doc" : "AK1PF jets" },
+  { "jet" : "ak1pfchs",   "enabled" : False, "name" : "AK1Jet",          "doc" : "AK1PFCHS jets" },
+  { "jet" : "ak2pf",      "enabled" : False, "name" : "AK2PFJet",        "doc" : "AK2PF jets" },
+  { "jet" : "ak2pfchs",   "enabled" : False, "name" : "AK2Jet",          "doc" : "AK2PFCHS jets" },
+  { "jet" : "ak5pf",      "enabled" : False, "name" : "AK5PFJet",        "doc" : "AK5PF jets" },
+  { "jet" : "ak5pfchs",   "enabled" : False, "name" : "AK5Jet",          "doc" : "AK5PFCHS jets" },
+  { "jet" : "ak6pf",      "enabled" : False, "name" : "AK6PFJet",        "doc" : "AK6PF jets" },
+  { "jet" : "ak6pfchs",   "enabled" : False, "name" : "AK6Jet",          "doc" : "AK6PFCHS jets" },
+  { "jet" : "ak7pf",      "enabled" : False, "name" : "AK7PFJet",        "doc" : "AK7PF jets" },
+  { "jet" : "ak7pfchs",   "enabled" : False, "name" : "AK7Jet",          "doc" : "AK7PFCHS jets" },
+  { "jet" : "ak9pf",      "enabled" : False, "name" : "AK9PFJet",        "doc" : "AK9PF jets" },
+  { "jet" : "ak9pfchs",   "enabled" : False, "name" : "AK9Jet",          "doc" : "AK9PFCHS jets" },
+  { "jet" : "ak10pf",     "enabled" : False, "name" : "AK10PFJet",       "doc" : "AK10PF jets" },
+  { "jet" : "ak10pfchs",  "enabled" : False, "name" : "AK10Jet",         "doc" : "AK10PFCHS jets" },
   # need to use empty list of JEC levels, otherwise would get this error:
   # cannot find key X in the JEC payload, this usually means you have to change the global tag
-  { "jet" : "kt4pf",      "enabled" : True,  "name" : "Kt4Jet",          "doc" : "KT4PF jets",      "JETCorrLevels" : [] },
-  { "jet" : "kt6pf",      "enabled" : True,  "name" : "Kt6Jet",          "doc" : "KT6PF jets",      "JETCorrLevels" : [] },
+  { "jet" : "kt4pf",      "enabled" : False, "name" : "Kt4Jet",          "doc" : "KT4PF jets",      "JETCorrLevels" : [] },
+  { "jet" : "kt6pf",      "enabled" : False, "name" : "Kt6Jet",          "doc" : "KT6PF jets",      "JETCorrLevels" : [] },
   # more non-standard jets
-  { "jet" : "ak4pfsk",    "enabled" : True,  "name" : "AK4PFSKJet",      "doc" : "AK4PFSK jets" },
-  { "jet" : "ak4pfcs",    "enabled" : True,  "name" : "AK4PFCSJet",      "doc" : "AK4PFCS jets", "minPt" : 100. },
+  { "jet" : "ak4pfsk",    "enabled" : False, "name" : "AK4PFSKJet",      "doc" : "AK4PFSK jets" },
+  { "jet" : "ak4pfcs",    "enabled" : False, "name" : "AK4PFCSJet",      "doc" : "AK4PFCS jets", "minPt" : 100. },
   # ca would be possible if its corrections were available in GT (JetCorrectionsRecord)
   # in principle, we could use some other jet corrections since the ca jet collection is non-standard anyways
 ]
+config = list(filter(lambda k: k['enabled'], config))
 
 def getGenPartName(name):
   return 'Gen{}'.format(name)
+
+class JetInfo(object):
+  def __init__(self, jet, inputCollection):
+    self.jet = jet
+    self.inputCollection = inputCollection
+  
+    algoKey     = 'algo'
+    sizeKey     = 'size'
+    recoKey     = 'reco'
+    puMethodKey = 'puMethod'
+    jetRegex = re.compile(
+      r'(?P<{algo}>({algoList}))(?P<{size}>[0-9]+)(?P<{reco}>(pf|calo))(?P<{puMethod}>(chs|puppi|sk|cs|))'.format(
+        algo     = algoKey,
+        algoList = '|'.join(supportedJetAlgos.keys()),
+        size     = sizeKey,
+        reco     = recoKey,
+        puMethod = puMethodKey,
+      )
+    )
+
+    jetMatch = jetRegex.match(jet.lower())
+    if not jetMatch:
+      raise RuntimeError('Invalid jet collection: %s' % jet)
+    self.jetAlgo     = jetMatch.group(algoKey)
+    self.jetSize     = jetMatch.group(sizeKey)
+    self.jetReco     = jetMatch.group(recoKey)
+    self.jetPUMethod = jetMatch.group(puMethodKey)
+
+    self.jetSizeNr = float(self.jetSize) / 10.
+
+    self.doCalo = self.jetReco == "calo"
+    self.doCS   = self.jetPUMethod == "cs"
+    self.skipUserData = self.doCalo or (self.jetPUMethod in [ "puppi", "sk" ] and inputCollection == "")
+    
+    self.jetCorrPayload = "{}{}{}".format(
+      self.jetAlgo.upper(), self.jetSize, "Calo" if self.doCalo else self.jetReco.upper()
+    )
+    if self.jetPUMethod == "puppi":
+      self.jetCorrPayload += "Puppi"
+    elif self.jetPUMethod in [ "cs", "sk" ]:
+      self.jetCorrPayload += "chs"
+    else:
+      self.jetCorrPayload += self.jetPUMethod.lower()
 
 JETVARS = cms.PSet(P4Vars,
   HFHEF     = Var("HFHadronEnergyFraction()", float, doc = "energy fraction in forward hadronic calorimeter", precision = 10),
@@ -102,20 +146,6 @@ class JetAdder(object):
       'pfBoostedDoubleSecondaryVertexAK8BJetTags',
     ]
     self.JETCorrLevels = [ "L1FastJet", "L2Relative", "L3Absolute" ]
-
-    self.algoKey     = 'algo'
-    self.sizeKey     = 'size'
-    self.recoKey     = 'reco'
-    self.puMethodKey = 'puMethod'
-    self.jetRegex = re.compile(
-      r'(?P<{algo}>({algoList}))(?P<{size}>[0-9]+)(?P<{reco}>(pf|calo))(?P<{puMethod}>(chs|puppi|sk|cs|))'.format(
-        algo     = self.algoKey,
-        algoList = '|'.join(supportedJetAlgos.keys()),
-        size     = self.sizeKey,
-        reco     = self.recoKey,
-        puMethod = self.puMethodKey,
-      )
-    )
 
     self.pfLabel = "packedPFCandidates"
     self.pvLabel = "offlineSlimmedPrimaryVertices"
@@ -167,20 +197,7 @@ class JetAdder(object):
     jetLower = jet.lower()
     jetUpper = jet.upper()
     tagName = "{}{}".format(jetUpper, postfix)
-
-    jetMatch = self.jetRegex.match(jetLower)
-    if not jetMatch:
-      raise RuntimeError('Invalid jet collection: %s' % jet)
-    jetAlgo     = jetMatch.group(self.algoKey)
-    jetSize     = jetMatch.group(self.sizeKey)
-    jetReco     = jetMatch.group(self.recoKey)
-    jetPUMethod = jetMatch.group(self.puMethodKey)
-
-    jetSizeNr = float(jetSize) / 10.
-
-    doCalo = jetReco == "calo"
-    doCS   = jetPUMethod == "cs"
-    skipUserData = doCalo or (jetPUMethod in [ "puppi", "sk" ] and inputCollection == "")
+    jetInfo = JetInfo(jet, inputCollection)
 
     if inputCollection == "slimmedJets":
       assert(jetLower == "ak4pfchs")
@@ -190,24 +207,16 @@ class JetAdder(object):
       assert(jetLower == "ak4pfpuppi")
     elif inputCollection == "slimmedCaloJets":
       assert(jetLower == "ak4calo")
-    
-    jetCorrPayload = "{}{}{}".format(jetAlgo.upper(), jetSize, "Calo" if doCalo else jetReco.upper())
-    if jetPUMethod == "puppi":
-      jetCorrPayload += "Puppi"
-    elif jetPUMethod in [ "cs", "sk" ]:
-      jetCorrPayload += "chs"
-    else:
-      jetCorrPayload += jetPUMethod.lower()
 
-    if not inputCollection or doCalo:
+    if not inputCollection or jetInfo.doCalo:
       # set up PF candidates
       pfCand = self.pfLabel
-      if jetPUMethod not in [ "", "cs" ]:
-        pfCand += jetPUMethod
+      if jetInfo.jetPUMethod not in [ "", "cs" ]:
+        pfCand += jetInfo.jetPUMethod
       if pfCand not in self.prerequisites:
-        if jetPUMethod in [ "", "cs" ]:
+        if jetInfo.jetPUMethod in [ "", "cs" ]:
           pass
-        elif jetPUMethod == "chs":
+        elif jetInfo.jetPUMethod == "chs":
           setattr(proc, pfCand,
             cms.EDFilter("CandPtrSelector",
               src = cms.InputTag(self.pfLabel),
@@ -215,7 +224,7 @@ class JetAdder(object):
             )
           )
           self.prerequisites.append(pfCand)
-        elif jetPUMethod == "puppi":
+        elif jetInfo.jetPUMethod == "puppi":
           setattr(proc, pfCand,
             puppi.clone(
               candName   = cms.InputTag(self.pfLabel),
@@ -223,19 +232,19 @@ class JetAdder(object):
             )
           )
           self.prerequisites.append(pfCand)
-        elif jetPUMethod == "sk":
+        elif jetInfo.jetPUMethod == "sk":
           setattr(proc, pfCand,
             softKiller.clone(
               PFCandidates = cms.InputTag(self.pfLabel),
-              rParam       = cms.double(jetSizeNr),
+              rParam       = cms.double(jetInfo.jetSizeNr),
             )
           )
           self.prerequisites.append(pfCand)
         else:
-          raise RuntimeError("Currently unsupported PU method: '%s'" % jetPUMethod)
+          raise RuntimeError("Currently unsupported PU method: '%s'" % jetInfo.jetPUMethod)
 
       # set up gen particles
-      genPartNoNu = "{}{}{}".format(jetAlgo.upper(), jetSize, 'GenJetsNoNu')
+      genPartNoNu = "{}{}{}".format(jetInfo.jetAlgo.upper(), jetInfo.jetSize, 'GenJetsNoNu')
       if genPartNoNu not in self.prerequisites:
         packedGenPartNoNu = "packedGenParticlesForJetsNoNu"
         if packedGenPartNoNu not in self.prerequisites:
@@ -251,14 +260,14 @@ class JetAdder(object):
               src = packedGenPartNoNu,
             ),
             AnomalousCellParameters,
-            jetAlgorithm = cms.string(supportedJetAlgos[jetAlgo]),
-            rParam       = cms.double(jetSizeNr),
+            jetAlgorithm = cms.string(supportedJetAlgos[jetInfo.jetAlgo]),
+            rParam       = cms.double(jetInfo.jetSizeNr),
           )
         )
         self.prerequisites.append(genPartNoNu)
 
       # create the recojet collection
-      if not doCalo:
+      if not jetInfo.doCalo:
         jetCollection = '{}Collection'.format(tagName)
         if jetCollection in self.main:
           raise ValueError("Step '%s' already implemented" % jetCollection)
@@ -270,12 +279,12 @@ class JetAdder(object):
               jetPtMin      = cms.double(minPt),
             ),
             AnomalousCellParameters,
-            jetAlgorithm              = cms.string(supportedJetAlgos[jetAlgo]),
-            rParam                    = cms.double(jetSizeNr),
-            useConstituentSubtraction = cms.bool(doCS),
-            csRParam                  = cms.double(0.4 if doCS else -1.),
-            csRho_EtaMax              = PFJetParameters.Rho_EtaMax if doCS else cms.double(-1.),
-            useExplicitGhosts         = cms.bool(doCS or jetPUMethod == "sk"),
+            jetAlgorithm              = cms.string(supportedJetAlgos[jetInfo.jetAlgo]),
+            rParam                    = cms.double(jetInfo.jetSizeNr),
+            useConstituentSubtraction = cms.bool(jetInfo.doCS),
+            csRParam                  = cms.double(0.4 if jetInfo.doCS else -1.),
+            csRho_EtaMax              = PFJetParameters.Rho_EtaMax if jetInfo.doCS else cms.double(-1.),
+            useExplicitGhosts         = cms.bool(jetInfo.doCS or jetInfo.jetPUMethod == "sk"),
           )
         )
         currentTasks.append(jetCollection)
@@ -283,17 +292,17 @@ class JetAdder(object):
         jetCollection = inputCollection
 
       # PATify
-      if jetPUMethod == "puppi":
+      if jetInfo.jetPUMethod == "puppi":
         jetCorrLabel = "Puppi"
-      elif jetPUMethod in [ "cs", "sk" ]:
+      elif jetInfo.jetPUMethod in [ "cs", "sk" ]:
         jetCorrLabel = "chs"
       else:
-        jetCorrLabel = jetPUMethod
+        jetCorrLabel = jetInfo.jetPUMethod
       jetCorrections = (
         "{}{}{}{}".format(
-          jetAlgo.upper(),
-          jetSize,
-          "Calo" if doCalo else jetReco.upper(),
+          jetInfo.jetAlgo.upper(),
+          jetInfo.jetSize,
+          "Calo" if jetInfo.doCalo else jetInfo.jetReco.upper(),
           jetCorrLabel
         ),
         JETCorrLevels,
@@ -303,21 +312,21 @@ class JetAdder(object):
         proc,
         labelName          = tagName,
         jetSource          = cms.InputTag(jetCollection),
-        algo               = jetAlgo,
-        rParam             = jetSizeNr,
+        algo               = jetInfo.jetAlgo,
+        rParam             = jetInfo.jetSizeNr,
         pvSource           = cms.InputTag(self.pvLabel),
         pfCandidates       = cms.InputTag(self.pfLabel),
         svSource           = cms.InputTag(self.svLabel),
         muSource           = cms.InputTag(self.muLabel),
         elSource           = cms.InputTag(self.elLabel),
-        btagDiscriminators = bTagDiscriminators if not doCalo else [ "None" ],
+        btagDiscriminators = bTagDiscriminators if not jetInfo.doCalo else [ "None" ],
         jetCorrections     = jetCorrections,
         genJetCollection   = cms.InputTag(genPartNoNu),
         genParticles       = cms.InputTag(self.gpLabel),
       )
-      getJetMCFlavour = not doCalo and jetPUMethod != "cs"
+      getJetMCFlavour = not jetInfo.doCalo and jetInfo.jetPUMethod != "cs"
       setattr(getattr(proc, "patJets{}".format(tagName)),           "getJetMCFlavour", cms.bool(getJetMCFlavour))
-      setattr(getattr(proc, "patJetCorrFactors{}".format(tagName)), "payload",         cms.string(jetCorrPayload))
+      setattr(getattr(proc, "patJetCorrFactors{}".format(tagName)), "payload",         cms.string(jetInfo.jetCorrPayload))
       selJet = "selectedPatJets{}".format(tagName)
     else:
       if inputCollection in [ "slimmedJets", "slimmedJetsPuppi", "slimmedCaloJets" ]:
@@ -328,7 +337,7 @@ class JetAdder(object):
         raise RuntimeError("Internal error")
       selJet = inputCollection
 
-    if not skipUserData:
+    if not jetInfo.skipUserData:
       jercVar = "jercVars{}".format(tagName)
       if jercVar in self.main:
         raise ValueError("Step '%s' already implemented" % jercVar)
@@ -387,8 +396,8 @@ class JetAdder(object):
         src             = selectedPatJetsWithUserData,
         levels          = cms.vstring(JETCorrLevels),
         primaryVertices = cms.InputTag(self.pvLabel),
-        payload         = cms.string(jetCorrPayload),
-        rho             = "fixedGridRhoFastjetAll{}".format("Calo" if doCalo else ""),
+        payload         = cms.string(jetInfo.jetCorrPayload),
+        rho             = "fixedGridRhoFastjetAll{}".format("Calo" if jetInfo.doCalo else ""),
       )
     )
     currentTasks.append(jetCorrFactors)
@@ -414,7 +423,7 @@ class JetAdder(object):
         doc       = cms.string(doc),
         singleton = cms.bool(False),
         extension = cms.bool(False),
-        variables = JETVARS.clone() if not skipUserData else cms.PSet(
+        variables = JETVARS.clone() if not jetInfo.skipUserData else cms.PSet(
           P4Vars,
           area = jetTable.variables.area,
           rawFactor = jetTable.variables.rawFactor,
@@ -422,14 +431,15 @@ class JetAdder(object):
       )
     )
     currentTasks.append(table)
-    
+
+    genPartName = getGenPartName(name)
     genTable = "{}GenTable".format(tagName)
     if genTable in self.main:
       raise ValueError("Step '%s' already implemented" % genTable)
     setattr(proc, genTable, cms.EDProducer("SimpleCandidateFlatTableProducer",
         src       = cms.InputTag(genPartNoNu),
         cut       = cms.string(""),
-        name      = cms.string(getGenPartName(name)),
+        name      = cms.string(genPartName),
         doc       = cms.string('{} (generator level)'.format(doc)),
         singleton = cms.bool(False),
         extension = cms.bool(False),
@@ -438,7 +448,37 @@ class JetAdder(object):
     )
     currentTasks.append(genTable)
 
-    if not skipUserData:
+    genFlavour = "{}GenFlavour".format(tagName)
+    if genFlavour in self.main:
+      raise ValueError("Step '%s' already implemented" % genFlavour)
+    setattr(proc, genFlavour, cms.EDProducer("JetFlavourClustering",
+        jets                     = cms.InputTag(genPartNoNu),
+        bHadrons                 = cms.InputTag("patJetPartons", "bHadrons"),
+        cHadrons                 = cms.InputTag("patJetPartons", "cHadrons"),
+        partons                  = cms.InputTag("patJetPartons", "physicsPartons"),
+        leptons                  = cms.InputTag("patJetPartons", "leptons"),
+        jetAlgorithm             = cms.string(supportedJetAlgos[jetInfo.jetAlgo]),
+        rParam                   = cms.double(jetInfo.jetSizeNr),
+        ghostRescaling           = cms.double(1e-18),
+        hadronFlavourHasPriority = cms.bool(False),
+      )
+    )
+    currentTasks.append(genFlavour)
+
+    genFlavourTable = "{}GenFlavourTable".format(tagName)
+    if genFlavourTable in self.main:
+      raise ValueError("Step '%s' already implemented" % genFlavourTable)
+    setattr(proc, genFlavourTable, cms.EDProducer("GenJetFlavourTableProducer",
+        name            = cms.string(genPartName),
+        src             = cms.InputTag(genPartNoNu),
+        cut             = cms.string(""),
+        deltaR          = cms.double(0.1),
+        jetFlavourInfos = cms.InputTag(genFlavour),
+      )
+    )
+    currentTasks.append(genFlavourTable)
+
+    if not jetInfo.skipUserData:
       altTasks = copy.deepcopy(currentTasks)
       for idx, task in enumerate(altTasks):
         if task == tightJetIdLepVeto:
@@ -489,8 +529,7 @@ def prepNanoAOD(process):
 
   ja = JetAdder()
 
-  for jetConfig in CONFIG:
-    if not jetConfig["enabled"]: continue
+  for jetConfig in config:
     cfg = { k : v for k, v in jetConfig.items() if k != "enabled" }
     ja.addCollection(process, **cfg)
 

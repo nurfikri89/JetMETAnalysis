@@ -43,23 +43,17 @@ echo "Running JRA at `date`"
 cmsRun $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/run_JRA_cfg.py &> jra.log
 echo "Finished at `date`"
 
-declare -a JETS=(
-  "ak4pf"
-  "ak4pfchs"
-  "ak4pfpuppi"
-  "ak8pf"
-  "ak8pfchs"
-  "ak8pfpuppi"
-)
+JETS=$(python -c "from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config as c; print('\n'.join(map(str, c)))")
 JETS_ROOT=""
 
-for jet in "${JETS[@]}"; do
-  echo "Running Ntuple filler for $jet jets at `date`";
+while read jet; do
+  jet_name=$(python -c "print('{}{}'.format($jet['jet'], $jet['postfix'] if 'postfix' in $jet else ''))")
+  echo "Running Ntuple filler for $jet_name jets at `date`";
   export JET_NTUPLE_FILLER=$jet;
-  jet_ntuple_filler $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/jet_ntuple_filler_cfg.py &> filler_$jet.log;
+  jet_ntuple_filler $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/jet_ntuple_filler_cfg.py &> filler_${jet_name}.log;
   echo "Finished at `date`"
-  JETS_ROOT="$JETS_ROOT jet_ntuple_filler_$jet.root";
-done
+  JETS_ROOT="$JETS_ROOT jet_ntuple_filler_${jet_name}.root";
+done <<< "$JETS"
 
 unset JET_NTUPLE_FILLER
 
