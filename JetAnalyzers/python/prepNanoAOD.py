@@ -15,9 +15,52 @@ from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cfi import updatedPatJets
 from PhysicsTools.PatAlgos.recoLayer0.jetCorrFactors_cfi import patJetCorrFactors
 
 from CommonTools.PileupAlgos.Puppi_cff import puppi
+from CommonTools.PileupAlgos.softKiller_cfi import softKiller
 
 import copy
 import re
+
+# the following collections have only 4-momentum, scale factor and jet area stored:
+# ak4calo, ak4pfpuppi (no input collection), ak8pfpuppi (no input collection), ak4pfsk
+CONFIG = [
+  # standard jets
+  { "jet" : "ak4pf",      "enabled" : True,  "name" : "JetPF",           "doc" : "AK4PF jets",      "minPt" : 10. },
+  { "jet" : "ak4pfpuppi", "enabled" : True,  "name" : "JetPUPPI",        "doc" : "AK4PFPUPPI jets", "inputCollection" : "slimmedJetsPuppi" }, # pT > 20
+  { "jet" : "ak4calo",    "enabled" : True,  "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
+  { "jet" : "ak8pf",      "enabled" : True,  "name" : "FatJetPF",        "doc" : "AK8PF jets" },
+  { "jet" : "ak8pfchs",   "enabled" : True,  "name" : "FatJetCHS",       "doc" : "AK8PFCHS jets" },
+  # standard jets, reconstruction algorithm rerun
+  { "jet" : "ak4pfchs",   "enabled" : True,  "name" : "JetRebuilt",      "doc" : "AK4PFCHS jets",   "postfix" : "Rebuilt" },
+  { "jet" : "ak4pfpuppi", "enabled" : True,  "name" : "JetPUPPIRebuilt", "doc" : "AK4PFPUPPI jets", "postfix" : "Rebuilt" },
+  { "jet" : "ak8pfpuppi", "enabled" : True,  "name" : "FatJetRebuilt",   "doc" : "AK8PFPUPPI jets", "postfix" : "Rebuilt" },
+  # non-standard jets
+  { "jet" : "ak1pf",      "enabled" : True,  "name" : "AK1PFJet",        "doc" : "AK1PF jets" },
+  { "jet" : "ak1pfchs",   "enabled" : True,  "name" : "AK1Jet",          "doc" : "AK1PFCHS jets" },
+  { "jet" : "ak2pf",      "enabled" : True,  "name" : "AK2PFJet",        "doc" : "AK2PF jets" },
+  { "jet" : "ak2pfchs",   "enabled" : True,  "name" : "AK2Jet",          "doc" : "AK2PFCHS jets" },
+  { "jet" : "ak5pf",      "enabled" : True,  "name" : "AK5PFJet",        "doc" : "AK5PF jets" },
+  { "jet" : "ak5pfchs",   "enabled" : True,  "name" : "AK5Jet",          "doc" : "AK5PFCHS jets" },
+  { "jet" : "ak6pf",      "enabled" : True,  "name" : "AK6PFJet",        "doc" : "AK6PF jets" },
+  { "jet" : "ak6pfchs",   "enabled" : True,  "name" : "AK6Jet",          "doc" : "AK6PFCHS jets" },
+  { "jet" : "ak7pf",      "enabled" : True,  "name" : "AK7PFJet",        "doc" : "AK7PF jets" },
+  { "jet" : "ak7pfchs",   "enabled" : True,  "name" : "AK7Jet",          "doc" : "AK7PFCHS jets" },
+  { "jet" : "ak9pf",      "enabled" : True,  "name" : "AK9PFJet",        "doc" : "AK9PF jets" },
+  { "jet" : "ak9pfchs",   "enabled" : True,  "name" : "AK9Jet",          "doc" : "AK9PFCHS jets" },
+  { "jet" : "ak10pf",     "enabled" : True,  "name" : "AK10PFJet",       "doc" : "AK10PF jets" },
+  { "jet" : "ak10pfchs",  "enabled" : True,  "name" : "AK10Jet",         "doc" : "AK10PFCHS jets" },
+  # need to use empty list of JEC levels, otherwise would get this error:
+  # cannot find key X in the JEC payload, this usually means you have to change the global tag
+  { "jet" : "kt4pf",      "enabled" : True,  "name" : "Kt4Jet",          "doc" : "KT4PF jets",      "JETCorrLevels" : [] },
+  { "jet" : "kt6pf",      "enabled" : True,  "name" : "Kt6Jet",          "doc" : "KT6PF jets",      "JETCorrLevels" : [] },
+  # more non-standard jets
+  { "jet" : "ak4pfsk",    "enabled" : True,  "name" : "AK4PFSKJet",      "doc" : "AK4PFSK jets" },
+  { "jet" : "ak4pfcs",    "enabled" : True,  "name" : "AK4PFCSJet",      "doc" : "AK4PFCS jets", "minPt" : 100. },
+  # ca would be possible if its corrections were available in GT (JetCorrectionsRecord)
+  # in principle, we could use some other jet corrections since the ca jet collection is non-standard anyways
+]
+
+def getGenPartName(name):
+  return 'Gen{}'.format(name)
 
 JETVARS = cms.PSet(P4Vars,
   HFHEF     = Var("HFHadronEnergyFraction()", float, doc = "energy fraction in forward hadronic calorimeter", precision = 10),
@@ -136,7 +179,8 @@ class JetAdder(object):
     jetSizeNr = float(jetSize) / 10.
 
     doCalo = jetReco == "calo"
-    skipUserData = doCalo or (jetPUMethod == "puppi" and inputCollection == "")
+    doCS   = jetPUMethod == "cs"
+    skipUserData = doCalo or (jetPUMethod in [ "puppi", "sk" ] and inputCollection == "")
 
     if inputCollection == "slimmedJets":
       assert(jetLower == "ak4pfchs")
@@ -150,14 +194,18 @@ class JetAdder(object):
     jetCorrPayload = "{}{}{}".format(jetAlgo.upper(), jetSize, "Calo" if doCalo else jetReco.upper())
     if jetPUMethod == "puppi":
       jetCorrPayload += "Puppi"
+    elif jetPUMethod in [ "cs", "sk" ]:
+      jetCorrPayload += "chs"
     else:
       jetCorrPayload += jetPUMethod.lower()
 
     if not inputCollection or doCalo:
       # set up PF candidates
-      pfCand = "{}{}".format(self.pfLabel, jetPUMethod)
+      pfCand = self.pfLabel
+      if jetPUMethod not in [ "", "cs" ]:
+        pfCand += jetPUMethod
       if pfCand not in self.prerequisites:
-        if jetPUMethod == "":
+        if jetPUMethod in [ "", "cs" ]:
           pass
         elif jetPUMethod == "chs":
           setattr(proc, pfCand,
@@ -172,6 +220,14 @@ class JetAdder(object):
             puppi.clone(
               candName   = cms.InputTag(self.pfLabel),
               vertexName = cms.InputTag(self.pvLabel),
+            )
+          )
+          self.prerequisites.append(pfCand)
+        elif jetPUMethod == "sk":
+          setattr(proc, pfCand,
+            softKiller.clone(
+              PFCandidates = cms.InputTag(self.pfLabel),
+              rParam       = cms.double(jetSizeNr),
             )
           )
           self.prerequisites.append(pfCand)
@@ -214,8 +270,12 @@ class JetAdder(object):
               jetPtMin      = cms.double(minPt),
             ),
             AnomalousCellParameters,
-            jetAlgorithm  = cms.string(supportedJetAlgos[jetAlgo]),
-            rParam        = cms.double(jetSizeNr),
+            jetAlgorithm              = cms.string(supportedJetAlgos[jetAlgo]),
+            rParam                    = cms.double(jetSizeNr),
+            useConstituentSubtraction = cms.bool(doCS),
+            csRParam                  = cms.double(0.4 if doCS else -1.),
+            csRho_EtaMax              = PFJetParameters.Rho_EtaMax if doCS else cms.double(-1.),
+            useExplicitGhosts         = cms.bool(doCS or jetPUMethod == "sk"),
           )
         )
         currentTasks.append(jetCollection)
@@ -223,12 +283,18 @@ class JetAdder(object):
         jetCollection = inputCollection
 
       # PATify
+      if jetPUMethod == "puppi":
+        jetCorrLabel = "Puppi"
+      elif jetPUMethod in [ "cs", "sk" ]:
+        jetCorrLabel = "chs"
+      else:
+        jetCorrLabel = jetPUMethod
       jetCorrections = (
         "{}{}{}{}".format(
           jetAlgo.upper(),
           jetSize,
           "Calo" if doCalo else jetReco.upper(),
-          "Puppi" if jetPUMethod == "puppi" else jetPUMethod.lower()
+          jetCorrLabel
         ),
         JETCorrLevels,
         "None",
@@ -249,7 +315,8 @@ class JetAdder(object):
         genJetCollection   = cms.InputTag(genPartNoNu),
         genParticles       = cms.InputTag(self.gpLabel),
       )
-      setattr(getattr(proc, "patJets{}".format(tagName)),           "getJetMCFlavour", cms.bool(not doCalo))
+      getJetMCFlavour = not doCalo and jetPUMethod != "cs"
+      setattr(getattr(proc, "patJets{}".format(tagName)),           "getJetMCFlavour", cms.bool(getJetMCFlavour))
       setattr(getattr(proc, "patJetCorrFactors{}".format(tagName)), "payload",         cms.string(jetCorrPayload))
       selJet = "selectedPatJets{}".format(tagName)
     else:
@@ -362,7 +429,7 @@ class JetAdder(object):
     setattr(proc, genTable, cms.EDProducer("SimpleCandidateFlatTableProducer",
         src       = cms.InputTag(genPartNoNu),
         cut       = cms.string(""),
-        name      = cms.string('Gen{}'.format(name)),
+        name      = cms.string(getGenPartName(name)),
         doc       = cms.string('{} (generator level)'.format(doc)),
         singleton = cms.bool(False),
         extension = cms.bool(False),
@@ -422,37 +489,9 @@ def prepNanoAOD(process):
 
   ja = JetAdder()
 
-  # standard jets
-  ja.addCollection(process, jet = "ak4pf",      name = "JetPF",       doc = "AK4PF jets",      minPt = 10.)
-  ja.addCollection(process, jet = "ak4pfpuppi", name = "AK4JetPUPPI", doc = "AK4PFPUPPI jets", postfix = "Rebuild")
-  ja.addCollection(process, jet = "ak4pfpuppi", name = "JetPUPPI",    doc = "AK4PFPUPPI jets", inputCollection = "slimmedJetsPuppi") # pT > 20
-  ja.addCollection(process, jet = "ak4calo",    name = "CaloJet",     doc = "AK4Calo jets",    inputCollection = "slimmedCaloJets") # pT > 20
-  ja.addCollection(process, jet = "ak8pf",      name = "FatJetPF",    doc = "AK8PF jets")
-  ja.addCollection(process, jet = "ak8pfchs",   name = "FatJetCHS",   doc = "AK8PFCHS jets")
-
-  # non-standard jets
-  ja.addCollection(process, jet = "ak1pf"   ,   name = "AK1PFJet",    doc = "AK1PF jets")
-  ja.addCollection(process, jet = "ak1pfchs",   name = "AK1Jet",      doc = "AK1PFCHS jets")
-  ja.addCollection(process, jet = "ak2pf"   ,   name = "AK2PFJet",    doc = "AK2PF jets")
-  ja.addCollection(process, jet = "ak2pfchs",   name = "AK2Jet",      doc = "AK2PFCHS jets")
-  ja.addCollection(process, jet = "ak5pf",      name = "AK5PFJet",    doc = "AK5PF jets")
-  ja.addCollection(process, jet = "ak5pfchs",   name = "AK5Jet",      doc = "AK5PFCHS jets")
-  ja.addCollection(process, jet = "ak6pf"   ,   name = "AK6PFJet",    doc = "AK6PF jets")
-  ja.addCollection(process, jet = "ak6pfchs",   name = "AK6Jet",      doc = "AK6PFCHS jets")
-  ja.addCollection(process, jet = "ak7pf"   ,   name = "AK7PFJet",    doc = "AK7PF jets")
-  ja.addCollection(process, jet = "ak7pfchs",   name = "AK7Jet",      doc = "AK7PFCHS jets")
-  ja.addCollection(process, jet = "ak9pf"   ,   name = "AK9PFJet",    doc = "AK9PF jets")
-  ja.addCollection(process, jet = "ak9pfchs",   name = "AK9Jet",      doc = "AK9PFCHS jets")
-  ja.addCollection(process, jet = "ak10pf"   ,  name = "AK10PFJet",   doc = "AK10PF jets")
-  ja.addCollection(process, jet = "ak10pfchs",  name = "AK10Jet",     doc = "AK10PFCHS jets")
-
-  # need to use empty list of JEC levels, otherwise would get this error:
-  # cannot find key 1 in the JEC payload, this usually means you have to change the global tag
-  ja.addCollection(process, jet = "kt4pf",      name = "Kt4Jet",      doc = "KT4PF jets",      JETCorrLevels = [])
-  ja.addCollection(process, jet = "kt6pf",      name = "Kt6Jet",      doc = "KT6PF jets",      JETCorrLevels = [])
-
-  # ca would be possible if its corrections were available in JetCorrectionsRecord/GT
-  # in principle, could use some other jet corrections since the jet collection is non-standard anyways
+  for jetConfig in CONFIG:
+    if not jetConfig["enabled"]: continue
+    cfg = { k : v for k, v in jetConfig.items() if k != "enabled" }
+    ja.addCollection(process, **cfg)
 
   process.nanoSequenceMC += ja.getSequence(process)
-
