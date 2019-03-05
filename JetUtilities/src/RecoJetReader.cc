@@ -15,7 +15,7 @@ enum { kPF, kCalo };
 RecoJetReader::RecoJetReader(const std::string & branchName_obj,
                              unsigned jetType)
   : jetType_(jetType)
-  , max_nJets_(256)
+  , max_nJets_(1024)
   , branchName_num_(Form("n%s", branchName_obj.data()))
   , branchName_obj_(branchName_obj)
   , jet_pt_(nullptr)

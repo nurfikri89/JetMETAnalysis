@@ -14,7 +14,7 @@ class GenJetReader
 {
 public:
   explicit GenJetReader(const std::string & branchName_obj,
-                        unsigned int max_nJets = 256);
+                        unsigned int max_nJets = 1024);
   ~GenJetReader();
 
   /**
