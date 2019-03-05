@@ -268,7 +268,7 @@ int main(int argc, char* argv[])
       outputTree_event->refy->push_back(genJet->p4().Rapidity());
       fillBranch(outputTree_event->refdphijt, deltaPhi(genJet->phi(), recJet->phi()));
       fillBranch(outputTree_event->refdrjt, deltaR(genJet->eta(), genJet->phi(), recJet->eta(), recJet->phi()));
-      outputTree_event->refarea->push_back(0.); // not available in nanoAOD
+      outputTree_event->refarea->push_back(genJet->area());
       outputTree_event->jte->push_back(recJetP4_uncorr.energy());
       outputTree_event->jtpt->push_back(recJetP4_uncorr.pt());
       outputTree_event->jteta->push_back(recJetP4_uncorr.eta());
