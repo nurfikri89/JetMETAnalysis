@@ -123,6 +123,7 @@ int main(int argc, char* argv[])
     jetCorrector = new FactorizedJetCorrector(jetCorrParams);
   }
 
+  const unsigned jetType = cfg_jet_ntuple_filler.getParameter<unsigned>("jetType");
   bool isDEBUG = cfg_jet_ntuple_filler.getParameter<bool>("isDEBUG");
 
   fwlite::InputSource inputFiles(cfg);
@@ -142,7 +143,7 @@ int main(int argc, char* argv[])
     src_weight, src_pThat, src_pudensity, src_gpudensity);
   inputTree->registerReader(evtInfoReader);
 
-  RecoJetReader* recJetReader = new RecoJetReader(src_recJets);
+  RecoJetReader* recJetReader = new RecoJetReader(src_recJets, jetType);
   inputTree->registerReader(recJetReader);
 
   GenJetReader* genJetReader = new GenJetReader(src_genJets);
@@ -275,7 +276,7 @@ int main(int argc, char* argv[])
       outputTree_event->jty->push_back(recJetP4_uncorr.Rapidity());
       outputTree_event->jtjec->push_back(jec);
       outputTree_event->jtarea->push_back(recJet->area());
-      fillBranch(outputTree_event->jtemf, 0.); // value not available in nanoAOD
+      fillBranch(outputTree_event->jtemf, recJet->emf());
       fillBranch(outputTree_event->jtchf, recJet->chHEF());
       fillBranch(outputTree_event->jtnhf, recJet->neHEF());
       fillBranch(outputTree_event->jtnef, recJet->neEmEF());

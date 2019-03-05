@@ -26,7 +26,7 @@ config = [
   # standard jets
   { "jet" : "ak4pf",      "enabled" : True,  "name" : "JetPF",           "doc" : "AK4PF jets",      "minPt" : 10. },
   { "jet" : "ak4pfpuppi", "enabled" : True,  "name" : "JetPUPPI",        "doc" : "AK4PFPUPPI jets", "inputCollection" : "slimmedJetsPuppi" }, # pT > 20
-  { "jet" : "ak4calo",    "enabled" : False, "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
+  { "jet" : "ak4calo",    "enabled" : True,  "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
   { "jet" : "ak8pf",      "enabled" : True,  "name" : "FatJetPF",        "doc" : "AK8PF jets" },
   { "jet" : "ak8pfchs",   "enabled" : True,  "name" : "FatJetCHS",       "doc" : "AK8PFCHS jets" },
   # standard jets, reconstruction algorithm rerun
@@ -257,7 +257,8 @@ class JetAdder(object):
         setattr(proc, genPartNoNu,
           cms.EDProducer("FastjetJetProducer",
             GenJetParameters.clone(
-              src = packedGenPartNoNu,
+              src          = packedGenPartNoNu,
+              doAreaFastjet = cms.bool(True),
             ),
             AnomalousCellParameters,
             jetAlgorithm = cms.string(supportedJetAlgos[jetInfo.jetAlgo]),
@@ -275,7 +276,7 @@ class JetAdder(object):
           cms.EDProducer("FastjetJetProducer",
             PFJetParameters.clone(
               src           = cms.InputTag(pfCand),
-              doAreaFastjet = True,
+              doAreaFastjet = cms.bool(True),
               jetPtMin      = cms.double(minPt),
             ),
             AnomalousCellParameters,
@@ -416,6 +417,22 @@ class JetAdder(object):
     table = "{}Table".format(tagName)
     if table in self.main:
       raise ValueError("Step '%s' already implemented" % table)
+    if jetInfo.skipUserData:
+      if jetInfo.doCalo:
+        tableContents = cms.PSet(
+          P4Vars,
+          area      = jetTable.variables.area,
+          rawFactor = jetTable.variables.rawFactor,
+          emf       = Var("emEnergyFraction()", float, doc = "electromagnetic energy fraction", precision = 10),
+        )
+      else:
+        tableContents = cms.PSet(
+          P4Vars,
+          area      = jetTable.variables.area,
+          rawFactor = jetTable.variables.rawFactor,
+        ),
+    else:
+      tableContents = JETVARS.clone()
     setattr(proc, table, cms.EDProducer("SimpleCandidateFlatTableProducer",
         src       = cms.InputTag(updatedJets),
         cut       = cms.string(""),
@@ -423,11 +440,7 @@ class JetAdder(object):
         doc       = cms.string(doc),
         singleton = cms.bool(False),
         extension = cms.bool(False),
-        variables = JETVARS.clone() if not jetInfo.skipUserData else cms.PSet(
-          P4Vars,
-          area = jetTable.variables.area,
-          rawFactor = jetTable.variables.rawFactor,
-        ),
+        variables = tableContents,
       )
     )
     currentTasks.append(table)
@@ -443,7 +456,9 @@ class JetAdder(object):
         doc       = cms.string('{} (generator level)'.format(doc)),
         singleton = cms.bool(False),
         extension = cms.bool(False),
-        variables = cms.PSet(P4Vars),
+        variables = cms.PSet(P4Vars,
+          area = jetTable.variables.area,
+        ),
       )
     )
     currentTasks.append(genTable)
@@ -494,6 +509,8 @@ def prepNanoAOD(process):
   process.jetTable.variables.HFHEF  = JETVARS.HFHEF
   process.jetTable.variables.HFEMEF = JETVARS.HFEMEF
 
+  process.genJetTable.variables.area = JETVARS.area
+
   # additional variables to AK8PFPUPPI
   process.fatJetTable.variables.chHEF  = JETVARS.chHEF
   process.fatJetTable.variables.neHEF  = JETVARS.neHEF
@@ -502,6 +519,8 @@ def prepNanoAOD(process):
   process.fatJetTable.variables.muEF   = JETVARS.muEF
   process.fatJetTable.variables.HFHEF  = JETVARS.HFHEF
   process.fatJetTable.variables.HFEMEF = JETVARS.HFEMEF
+
+  process.genJetAK8Table.variables.area = JETVARS.area
 
   process.jercVarsFatJet = process.jercVars.clone(
     srcJet = cms.InputTag("selectedUpdatedPatJetsAK8WithDeepInfo"),

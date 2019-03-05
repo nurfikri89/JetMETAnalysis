@@ -22,7 +22,9 @@ class RecoJetReader
   : public ReaderBase
 {
  public:
-  RecoJetReader(const std::string & branchName_obj);
+  explicit
+  RecoJetReader(const std::string & branchName_obj,
+                unsigned jetType);
   ~RecoJetReader();
 
   /**
@@ -45,6 +47,8 @@ protected:
   void
   setBranchNames();
 
+  const unsigned jetType_;
+
   const unsigned int max_nJets_;
   std::string branchName_num_;
   std::string branchName_obj_;
@@ -62,6 +66,7 @@ protected:
   std::string branchName_muEF_;
   std::string branchName_hfEF_;
   std::string branchName_hfmEF_;
+  std::string branchName_emf_;
   std::string branchName_jetId_;
 
   UInt_t nJets_;
@@ -78,6 +83,7 @@ protected:
   Float_t * jet_muEF_;
   Float_t * jet_hfEF_;
   Float_t * jet_hfmEF_;
+  Float_t * jet_emf_;
   Int_t * jet_jetId_;
 
   // CV: make sure that only one RecoJetReader instance exists for a given branchName,

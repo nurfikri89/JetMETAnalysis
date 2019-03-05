@@ -25,7 +25,8 @@ public:
   Jet(Double_t pt,
       Double_t eta,
       Double_t phi,
-      Double_t mass);
+      Double_t mass,
+      Double_t area);
 
   virtual ~Jet() {}
 
@@ -37,6 +38,7 @@ public:
   Float_t eta() const;
   Float_t phi() const;
   Float_t mass() const;
+  Float_t area() const;
   Float_t absEta() const;
   const Jet::LorentzVector & p4() const;
 
@@ -45,6 +47,7 @@ protected:
   Float_t eta_;  ///< eta of the jet
   Float_t phi_;  ///< phi of the jet
   Float_t mass_; ///< mass of the jet
+  Float_t area_; ///< area of the jet
   Float_t absEta_; ///< |eta| of the jet
   Jet::LorentzVector p4_; ///< 4-momentum constructed from the pT, eta, phi and mass
 };

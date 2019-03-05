@@ -45,6 +45,7 @@ protected:
   std::string branchName_eta_;
   std::string branchName_phi_;
   std::string branchName_mass_;
+  std::string branchName_area_;
   std::string branchName_partonFlavour_;
   std::string branchName_hadronFlavour_;
 
@@ -53,6 +54,7 @@ protected:
   Float_t * jet_eta_;
   Float_t * jet_phi_;
   Float_t * jet_mass_;
+  Float_t * jet_area_;
   Int_t * jet_partonFlavour_;
   UChar_t * jet_hadronFlavour_;
 

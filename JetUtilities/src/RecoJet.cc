@@ -3,7 +3,6 @@
 #include "JetMETAnalysis/JetUtilities/interface/GenJet.h" // GenJet
 
 RecoJet::RecoJet(const Jet & jet,
-                 Float_t area,
                  Float_t rawFactor,
                  Float_t chHEF,
                  Float_t neHEF,
@@ -12,9 +11,9 @@ RecoJet::RecoJet(const Jet & jet,
                  Float_t muEF,
                  Float_t hfEF,
                  Float_t hfmEF,
+                 Float_t emf,
                  Int_t jetId)
   : Jet(jet)
-  , area_(area)
   , rawFactor_(rawFactor)
   , chHEF_(chHEF)
   , neHEF_(neHEF)
@@ -23,6 +22,7 @@ RecoJet::RecoJet(const Jet & jet,
   , muEF_(muEF)
   , hfEF_(hfEF)
   , hfmEF_(hfmEF)
+  , emf_(emf)
   , jetId_(jetId)
   , genJet_(nullptr)
 {}
@@ -31,12 +31,6 @@ void
 RecoJet::set_genJet(const GenJet * genJet)
 {
   genJet_ = genJet;
-}
-
-Float_t 
-RecoJet::area() const
-{
-  return area_;
 }
 
 Float_t 
@@ -87,6 +81,12 @@ RecoJet::hfmEF() const
   return hfmEF_;
 }
 
+Float_t
+RecoJet::emf() const
+{
+  return emf_;
+}
+
 Int_t 
 RecoJet::jetId() const
 {
@@ -103,17 +103,17 @@ std::ostream &
 operator<<(std::ostream & stream,
            const RecoJet & jet)
 { 
-  stream << static_cast<const Jet &>(jet)             << ","
-            " area = " << jet.area()                   << ","
-            " rawFactor = " << jet.rawFactor()         << ","
-            " chHEF = " << jet.chHEF()                 << ","
-            " neHEF = " << jet.neHEF()                 << ","
-            " chEmEF = " << jet.chEmEF()               << ","
-            " neEmEF = " << jet.neEmEF()               << ","   
-            " muEF = " << jet.muEF()                   << ","
-            " hfEF = " << jet.hfEF()                   << ","
-            " hfmEF = " << jet.hfmEF()                 << ","
-            " jetId = " << jet.jetId()                 << "\n";
+  stream << static_cast<const Jet &>(jet)      << ","
+            " rawFactor = " << jet.rawFactor() << ","
+            " chHEF = "     << jet.chHEF()     << ","
+            " neHEF = "     << jet.neHEF()     << ","
+            " chEmEF = "    << jet.chEmEF()    << ","
+            " neEmEF = "    << jet.neEmEF()    << ","
+            " muEF = "      << jet.muEF()      << ","
+            " hfEF = "      << jet.hfEF()      << ","
+            " hfmEF = "     << jet.hfmEF()     << ","
+            " emf = "       << jet.emf()       << ","
+            " jetId = "     << jet.jetId()     << "\n";
   if(jet.genJet())
   {
     stream << "matched to generator-level jet:\n";

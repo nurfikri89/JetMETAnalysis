@@ -3,13 +3,15 @@
 #include <cmath> // std::fabs()
 
 Jet::Jet(Double_t pt,
-	 Double_t eta,
-	 Double_t phi,
-	 Double_t mass)
+         Double_t eta,
+         Double_t phi,
+         Double_t mass,
+         Double_t area)
   : pt_(pt)
   , eta_(eta)
   , phi_(phi)
   , mass_(mass)
+  , area_(area)
   , absEta_(std::fabs(eta_))
   , p4_{pt_, eta_, phi_, mass_}
 {}
@@ -39,6 +41,12 @@ Jet::mass() const
 }
 
 Float_t
+Jet::area() const
+{
+  return area_;
+}
+
+Float_t
 Jet::absEta() const
 {
   return absEta_;
@@ -58,6 +66,7 @@ operator<<(std::ostream & stream,
             " eta = "  << jet.eta()         << ","
             " phi = "  << jet.phi()         << ","
             " mass = " << jet.mass()        << ","
+            " area = " << jet.area()        << ","
             " E = "    << jet.p4().energy() << ","
             " |p| = "  << jet.p4().P();
   return stream;

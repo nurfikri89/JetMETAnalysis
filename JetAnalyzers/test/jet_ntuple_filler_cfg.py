@@ -23,8 +23,13 @@ jetName = '{}{}'.format(jetChoice['jet'], getFromJetChoice('postfix'))
 outputTree_flags = 1 + 4 + 16
 if 'pf' in jetChoice['jet']:
     outputTree_flags += 64
+    if jetInfo.skipUserData:
+        jetType = 2
+    else:
+        jetType = 0
 elif 'calo' in jetChoice['jet']:
     outputTree_flags += 32
+    jetType = 1
 else:
     raise RuntimeError("Invalid jet collection: %s" % jetChoice['jet'])
 
@@ -82,6 +87,13 @@ process.jet_ntuple_filler = cms.PSet(
     # - 7* (128) "save candidates"
     # Options marked with an asterisk are not supported yet.
     outputTree_flags = cms.uint32(outputTree_flags),
+
+    # Jet type:
+    # - 0                  -- PF jet
+    # - 1                  -- Calo jet
+    # - (any other number) -- jets with only 4-momentum, JEC raw factor and area
+    # (The flag esentially determines what information is available about the jet collection.)
+    jetType = cms.uint32(jetType),
 
     # Flag to enable (True) or disable (False) debug output
     isDEBUG = cms.bool(False)

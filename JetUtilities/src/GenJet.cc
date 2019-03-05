@@ -1,8 +1,8 @@
 #include "JetMETAnalysis/JetUtilities/interface/GenJet.h" // GenJet
 
 GenJet::GenJet(const Jet & jet,
-	       Int_t partonFlavour,
-	       UChar_t hadronFlavour)
+               Int_t partonFlavour,
+               UChar_t hadronFlavour)
   : Jet(jet)
   , partonFlavour_(partonFlavour)
   , hadronFlavour_(hadronFlavour)

@@ -10,8 +10,12 @@
 std::map<std::string, int> RecoJetReader::numInstances_;
 std::map<std::string, RecoJetReader *> RecoJetReader::instances_;
 
-RecoJetReader::RecoJetReader(const std::string & branchName_obj)
-  : max_nJets_(256)
+enum { kPF, kCalo };
+
+RecoJetReader::RecoJetReader(const std::string & branchName_obj,
+                             unsigned jetType)
+  : jetType_(jetType)
+  , max_nJets_(256)
   , branchName_num_(Form("n%s", branchName_obj.data()))
   , branchName_obj_(branchName_obj)
   , jet_pt_(nullptr)
@@ -27,6 +31,7 @@ RecoJetReader::RecoJetReader(const std::string & branchName_obj)
   , jet_muEF_(nullptr)
   , jet_hfEF_(nullptr)
   , jet_hfmEF_(nullptr)
+  , jet_emf_(nullptr)
   , jet_jetId_(nullptr)
 {
   setBranchNames();
@@ -53,6 +58,7 @@ RecoJetReader::~RecoJetReader()
     delete[] gInstance->jet_muEF_;
     delete[] gInstance->jet_hfEF_;
     delete[] gInstance->jet_hfmEF_;
+    delete[] gInstance->jet_emf_;
     delete[] gInstance->jet_jetId_;
     instances_[branchName_obj_] = nullptr;
   }
@@ -76,6 +82,7 @@ RecoJetReader::setBranchNames()
     branchName_muEF_ = Form("%s_%s", branchName_obj_.data(), "muEF");
     branchName_hfEF_ = Form("%s_%s", branchName_obj_.data(), "HFHEF");
     branchName_hfmEF_ = Form("%s_%s", branchName_obj_.data(), "HFEMEF");
+    branchName_emf_ = Form("%s_%s", branchName_obj_.data(), "emf");
     branchName_jetId_ = Form("%s_%s", branchName_obj_.data(), "jetId");
     instances_[branchName_obj_] = this;
   }
@@ -106,14 +113,15 @@ RecoJetReader::setBranchAddresses(TTree * tree)
     bai.setBranchAddress(jet_mass_, branchName_mass_);
     bai.setBranchAddress(jet_area_, branchName_area_);
     bai.setBranchAddress(jet_rawFactor_, branchName_rawFactor_);
-    bai.setBranchAddress(jet_chHEF_, branchName_chHEF_);
-    bai.setBranchAddress(jet_neHEF_, branchName_neHEF_);
-    bai.setBranchAddress(jet_chEmEF_, branchName_chEmEF_);
-    bai.setBranchAddress(jet_neEmEF_, branchName_neEmEF_);
-    bai.setBranchAddress(jet_muEF_, branchName_muEF_);
-    bai.setBranchAddress(jet_hfEF_, branchName_hfEF_);
-    bai.setBranchAddress(jet_hfmEF_, branchName_hfmEF_);
-    bai.setBranchAddress(jet_jetId_, branchName_jetId_);
+    bai.setBranchAddress(jet_chHEF_, jetType_ == kPF ? branchName_chHEF_ : "");
+    bai.setBranchAddress(jet_neHEF_, jetType_ == kPF ? branchName_neHEF_ : "");
+    bai.setBranchAddress(jet_chEmEF_, jetType_ == kPF ? branchName_chEmEF_ : "");
+    bai.setBranchAddress(jet_neEmEF_, jetType_ == kPF ? branchName_neEmEF_ : "");
+    bai.setBranchAddress(jet_muEF_, jetType_ == kPF ? branchName_muEF_ : "");
+    bai.setBranchAddress(jet_hfEF_, jetType_ == kPF ? branchName_hfEF_ : "");
+    bai.setBranchAddress(jet_hfmEF_, jetType_ == kPF ? branchName_hfmEF_ : "");
+    bai.setBranchAddress(jet_emf_, jetType_ == kCalo ? branchName_emf_ : "");
+    bai.setBranchAddress(jet_jetId_, jetType_ == kPF ? branchName_jetId_ : "");
   }
 }
 
@@ -143,8 +151,8 @@ RecoJetReader::read() const
           gInstance->jet_eta_[idxJet],
           gInstance->jet_phi_[idxJet],
           gInstance->jet_mass_[idxJet],
+          gInstance->jet_area_[idxJet],
         },
-        gInstance->jet_area_[idxJet],
         gInstance->jet_rawFactor_[idxJet],
         gInstance->jet_chHEF_[idxJet],
         gInstance->jet_neHEF_[idxJet],
@@ -153,6 +161,7 @@ RecoJetReader::read() const
         gInstance->jet_muEF_[idxJet],
         gInstance->jet_hfEF_[idxJet],
         gInstance->jet_hfmEF_[idxJet],
+        gInstance->jet_emf_[idxJet],
         gInstance->jet_jetId_[idxJet],
       });
     } // idxJet
