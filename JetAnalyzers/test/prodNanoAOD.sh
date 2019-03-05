@@ -43,7 +43,7 @@ echo "Running JRA at `date`"
 cmsRun $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/run_JRA_cfg.py &> jra.log
 echo "Finished at `date`"
 
-JETS=$(python -c "from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config as c; print('\n'.join(map(str, c)))")
+JETS=$(python -c "from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config_ext as c; print('\n'.join(map(str, c)))")
 JETS_ROOT=""
 
 while read jet; do

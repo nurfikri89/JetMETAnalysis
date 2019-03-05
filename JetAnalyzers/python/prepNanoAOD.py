@@ -60,6 +60,22 @@ config = [
 ]
 config = list(filter(lambda k: k['enabled'], config))
 
+# not meant to be used by JetAdder, rather by prodNanoAOD.sh, jet_ntuple_filler_cfg.py and run_workflow.sh
+config_ext = copy.deepcopy(config)
+config_ext.extend([
+  { "jet" : "ak4pfchs",   "enabled" : True,  "name" : "Jet",    "genName" : "GenJet",    "inputCollection" : "slimmedJets" },
+  { "jet" : "ak8pfpuppi", "enabled" : True,  "name" : "FatJet", "genName" : "GenJetAK8", "inputCollection" : "slimmedJetsAK8" },
+])
+
+binning = {
+  "ak4pf"      : { "binseta" : [ -2, -1, 0, 1, 2 ], "binspt" : [ 20, 30, 50, 70, 100, 150, 200,      300, 400, 500, 600, 800, 1000 ] },
+  "ak4pfchs"   : { "binseta" : [ -2, -1, 0, 1, 2 ], "binspt" : [ 20, 30, 50, 70, 100, 150, 200,      300, 400, 500, 600, 800, 1000 ] },
+  "ak4pfpuppi" : { "binseta" : [ -2, -1, 0, 1, 2 ], "binspt" : [ 20, 30, 50, 70, 100, 150, 200,      300, 400, 500, 600, 800, 1000 ] },
+  "ak8pf"      : { "binseta" : [ -2, -1, 0, 1, 2 ], "binspt" : [                           200, 250, 300, 400, 500, 600, 800, 1000 ] },
+  "ak8pfchs"   : { "binseta" : [ -2, -1, 0, 1, 2 ], "binspt" : [                           200, 250, 300, 400, 500, 600, 800, 1000 ] },
+  "ak8pfpuppi" : { "binseta" : [ -2, -1, 0, 1, 2 ], "binspt" : [                           200, 250, 300, 400, 500, 600, 800, 1000 ] },
+}
+
 def getGenPartName(name):
   return 'Gen{}'.format(name)
 
@@ -166,6 +182,7 @@ class JetAdder(object):
         jet,
         name,
         doc,
+        genName            = "",
         minPt              = 5.,
         inputCollection    = "",
         bTagDiscriminators = None,
@@ -445,7 +462,7 @@ class JetAdder(object):
     )
     currentTasks.append(table)
 
-    genPartName = getGenPartName(name)
+    genPartName = genName if genName else getGenPartName(name)
     genTable = "{}GenTable".format(tagName)
     if genTable in self.main:
       raise ValueError("Step '%s' already implemented" % genTable)

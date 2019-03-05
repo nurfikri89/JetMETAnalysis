@@ -16,7 +16,9 @@ else:
 getFromJetChoice = lambda key: jetChoice[key] if key in jetChoice else ''
 
 recJets = jetChoice['name']
-genJets = getGenPartName(recJets)
+genJets = getFromJetChoice('genName')
+if not genJets:
+  genJets = getGenPartName(recJets)
 jetInfo = JetInfo(jetChoice['jet'], getFromJetChoice('inputCollection'))
 jetName = '{}{}'.format(jetChoice['jet'], getFromJetChoice('postfix'))
 
