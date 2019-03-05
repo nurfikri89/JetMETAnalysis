@@ -26,35 +26,35 @@ config = [
   # standard jets
   { "jet" : "ak4pf",      "enabled" : True,  "name" : "JetPF",           "doc" : "AK4PF jets",      "minPt" : 10. },
   { "jet" : "ak4pfpuppi", "enabled" : True,  "name" : "JetPUPPI",        "doc" : "AK4PFPUPPI jets", "inputCollection" : "slimmedJetsPuppi" }, # pT > 20
-  { "jet" : "ak4calo",    "enabled" : True,  "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
+  { "jet" : "ak4calo",    "enabled" : False, "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
   { "jet" : "ak8pf",      "enabled" : True,  "name" : "FatJetPF",        "doc" : "AK8PF jets" },
   { "jet" : "ak8pfchs",   "enabled" : True,  "name" : "FatJetCHS",       "doc" : "AK8PFCHS jets" },
   # standard jets, reconstruction algorithm rerun
-  { "jet" : "ak4pfchs",   "enabled" : True,  "name" : "JetRebuilt",      "doc" : "AK4PFCHS jets",   "postfix" : "Rebuilt" },
-  { "jet" : "ak4pfpuppi", "enabled" : True,  "name" : "JetPUPPIRebuilt", "doc" : "AK4PFPUPPI jets", "postfix" : "Rebuilt" },
-  { "jet" : "ak8pfpuppi", "enabled" : True,  "name" : "FatJetRebuilt",   "doc" : "AK8PFPUPPI jets", "postfix" : "Rebuilt" },
+  { "jet" : "ak4pfchs",   "enabled" : False, "name" : "JetRebuilt",      "doc" : "AK4PFCHS jets",   "postfix" : "Rebuilt" },
+  { "jet" : "ak4pfpuppi", "enabled" : False, "name" : "JetPUPPIRebuilt", "doc" : "AK4PFPUPPI jets", "postfix" : "Rebuilt" },
+  { "jet" : "ak8pfpuppi", "enabled" : False, "name" : "FatJetRebuilt",   "doc" : "AK8PFPUPPI jets", "postfix" : "Rebuilt" },
   # non-standard jets
-  { "jet" : "ak1pf",      "enabled" : True,  "name" : "AK1PFJet",        "doc" : "AK1PF jets" },
-  { "jet" : "ak1pfchs",   "enabled" : True,  "name" : "AK1Jet",          "doc" : "AK1PFCHS jets" },
-  { "jet" : "ak2pf",      "enabled" : True,  "name" : "AK2PFJet",        "doc" : "AK2PF jets" },
-  { "jet" : "ak2pfchs",   "enabled" : True,  "name" : "AK2Jet",          "doc" : "AK2PFCHS jets" },
-  { "jet" : "ak5pf",      "enabled" : True,  "name" : "AK5PFJet",        "doc" : "AK5PF jets" },
-  { "jet" : "ak5pfchs",   "enabled" : True,  "name" : "AK5Jet",          "doc" : "AK5PFCHS jets" },
-  { "jet" : "ak6pf",      "enabled" : True,  "name" : "AK6PFJet",        "doc" : "AK6PF jets" },
-  { "jet" : "ak6pfchs",   "enabled" : True,  "name" : "AK6Jet",          "doc" : "AK6PFCHS jets" },
-  { "jet" : "ak7pf",      "enabled" : True,  "name" : "AK7PFJet",        "doc" : "AK7PF jets" },
-  { "jet" : "ak7pfchs",   "enabled" : True,  "name" : "AK7Jet",          "doc" : "AK7PFCHS jets" },
-  { "jet" : "ak9pf",      "enabled" : True,  "name" : "AK9PFJet",        "doc" : "AK9PF jets" },
-  { "jet" : "ak9pfchs",   "enabled" : True,  "name" : "AK9Jet",          "doc" : "AK9PFCHS jets" },
-  { "jet" : "ak10pf",     "enabled" : True,  "name" : "AK10PFJet",       "doc" : "AK10PF jets" },
-  { "jet" : "ak10pfchs",  "enabled" : True,  "name" : "AK10Jet",         "doc" : "AK10PFCHS jets" },
+  { "jet" : "ak1pf",      "enabled" : False, "name" : "AK1PFJet",        "doc" : "AK1PF jets" },
+  { "jet" : "ak1pfchs",   "enabled" : False, "name" : "AK1Jet",          "doc" : "AK1PFCHS jets" },
+  { "jet" : "ak2pf",      "enabled" : False, "name" : "AK2PFJet",        "doc" : "AK2PF jets" },
+  { "jet" : "ak2pfchs",   "enabled" : False, "name" : "AK2Jet",          "doc" : "AK2PFCHS jets" },
+  { "jet" : "ak5pf",      "enabled" : False, "name" : "AK5PFJet",        "doc" : "AK5PF jets" },
+  { "jet" : "ak5pfchs",   "enabled" : False, "name" : "AK5Jet",          "doc" : "AK5PFCHS jets" },
+  { "jet" : "ak6pf",      "enabled" : False, "name" : "AK6PFJet",        "doc" : "AK6PF jets" },
+  { "jet" : "ak6pfchs",   "enabled" : False, "name" : "AK6Jet",          "doc" : "AK6PFCHS jets" },
+  { "jet" : "ak7pf",      "enabled" : False, "name" : "AK7PFJet",        "doc" : "AK7PF jets" },
+  { "jet" : "ak7pfchs",   "enabled" : False, "name" : "AK7Jet",          "doc" : "AK7PFCHS jets" },
+  { "jet" : "ak9pf",      "enabled" : False, "name" : "AK9PFJet",        "doc" : "AK9PF jets" },
+  { "jet" : "ak9pfchs",   "enabled" : False, "name" : "AK9Jet",          "doc" : "AK9PFCHS jets" },
+  { "jet" : "ak10pf",     "enabled" : False, "name" : "AK10PFJet",       "doc" : "AK10PF jets" },
+  { "jet" : "ak10pfchs",  "enabled" : False, "name" : "AK10Jet",         "doc" : "AK10PFCHS jets" },
   # need to use empty list of JEC levels, otherwise would get this error:
   # cannot find key X in the JEC payload, this usually means you have to change the global tag
-  { "jet" : "kt4pf",      "enabled" : True,  "name" : "Kt4Jet",          "doc" : "KT4PF jets",      "JETCorrLevels" : [] },
-  { "jet" : "kt6pf",      "enabled" : True,  "name" : "Kt6Jet",          "doc" : "KT6PF jets",      "JETCorrLevels" : [] },
+  { "jet" : "kt4pf",      "enabled" : False, "name" : "Kt4Jet",          "doc" : "KT4PF jets",      "JETCorrLevels" : [] },
+  { "jet" : "kt6pf",      "enabled" : False, "name" : "Kt6Jet",          "doc" : "KT6PF jets",      "JETCorrLevels" : [] },
   # more non-standard jets
-  { "jet" : "ak4pfsk",    "enabled" : True,  "name" : "AK4PFSKJet",      "doc" : "AK4PFSK jets" },
-  { "jet" : "ak4pfcs",    "enabled" : True,  "name" : "AK4PFCSJet",      "doc" : "AK4PFCS jets", "minPt" : 100. },
+  { "jet" : "ak4pfsk",    "enabled" : False, "name" : "AK4PFSKJet",      "doc" : "AK4PFSK jets" },
+  { "jet" : "ak4pfcs",    "enabled" : False, "name" : "AK4PFCSJet",      "doc" : "AK4PFCS jets", "minPt" : 100. },
   # ca would be possible if its corrections were available in GT (JetCorrectionsRecord)
   # in principle, we could use some other jet corrections since the ca jet collection is non-standard anyways
 ]
