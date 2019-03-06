@@ -20,7 +20,7 @@ genJets = getFromJetChoice('genName')
 if not genJets:
   genJets = getGenPartName(recJets)
 jetInfo = JetInfo(jetChoice['jet'], getFromJetChoice('inputCollection'))
-jetName = '{}{}'.format(jetChoice['jet'], getFromJetChoice('postfix'))
+jetName = jetChoice['jet']
 
 outputTree_flags = 1 + 4 + 16
 if 'pf' in jetChoice['jet']:

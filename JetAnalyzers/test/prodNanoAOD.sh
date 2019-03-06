@@ -47,7 +47,7 @@ JETS=$(python -c "from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config_ext
 JETS_ROOT=""
 
 while read jet; do
-  jet_name=$(python -c "print('{}{}'.format($jet['jet'], $jet['postfix'] if 'postfix' in $jet else ''))")
+  jet_name=$(python -c "print($jet['jet'])")
   echo "Running Ntuple filler for $jet_name jets at `date`";
   export JET_NTUPLE_FILLER=$jet;
   jet_ntuple_filler $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/test/jet_ntuple_filler_cfg.py &> filler_${jet_name}.log;

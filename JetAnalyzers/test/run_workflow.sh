@@ -4,7 +4,7 @@ ERA="Fall17_17Nov2017_V8_MC"
 JECPATH=$CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/data/JEC_Fall17_17Nov2017_V8_MC
 
 JETS=$(python -c "from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config_ext as c; print('\n'.join(map(str, c)))")
-JET_NAMES=$(python -c "from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config_ext as c; print('\n'.join(map(lambda x: '%s%s' % (x['jet'], x['postfix'] if 'postfix' in x else ''), c)))")
+JET_NAMES=$(python -c "from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config_ext as c; print('\n'.join(map(lambda x: x['jet'], c)))")
 
 for input_name in JRA jet_ntuple_filler; do
 

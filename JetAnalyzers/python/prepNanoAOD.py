@@ -29,10 +29,10 @@ config = [
   { "jet" : "ak4calo",    "enabled" : False, "name" : "CaloJet",         "doc" : "AK4Calo jets",    "inputCollection" : "slimmedCaloJets" }, # pT > 20
   { "jet" : "ak8pf",      "enabled" : True,  "name" : "FatJetPF",        "doc" : "AK8PF jets" },
   { "jet" : "ak8pfchs",   "enabled" : True,  "name" : "FatJetCHS",       "doc" : "AK8PFCHS jets" },
-  # standard jets, reconstruction algorithm rerun
-  { "jet" : "ak4pfchs",   "enabled" : False, "name" : "JetRebuilt",      "doc" : "AK4PFCHS jets",   "postfix" : "Rebuilt" },
-  { "jet" : "ak4pfpuppi", "enabled" : False, "name" : "JetPUPPIRebuilt", "doc" : "AK4PFPUPPI jets", "postfix" : "Rebuilt" },
-  { "jet" : "ak8pfpuppi", "enabled" : False, "name" : "FatJetRebuilt",   "doc" : "AK8PFPUPPI jets", "postfix" : "Rebuilt" },
+  # standard jets, reconstruction algorithm rerun on packedPFCandidates (in which charged particles must have pT > 3 GeV)
+  { "jet" : "ak4pfchs",   "enabled" : False, "name" : "JetRebuilt",      "doc" : "AK4PFCHS jets" },
+  { "jet" : "ak4pfpuppi", "enabled" : False, "name" : "JetPUPPIRebuilt", "doc" : "AK4PFPUPPI jets" },
+  { "jet" : "ak8pfpuppi", "enabled" : False, "name" : "FatJetRebuilt",   "doc" : "AK8PFPUPPI jets" },
   # non-standard jets
   { "jet" : "ak1pf",      "enabled" : False, "name" : "AK1PFJet",        "doc" : "AK1PF jets" },
   { "jet" : "ak1pfchs",   "enabled" : False, "name" : "AK1Jet",          "doc" : "AK1PFCHS jets" },
@@ -187,15 +187,9 @@ class JetAdder(object):
         inputCollection    = "",
         bTagDiscriminators = None,
         JETCorrLevels      = None,
-        postfix            = "",
       ):
 
-    print(
-      "prepNanoAOD::JetAdder::addCollection: adding collection: {}{}".format(
-        jet,
-        " ({})".format(postfix) if postfix else "",
-      )
-    )
+    print("prepNanoAOD::JetAdder::addCollection: adding collection: {}".format(jet))
     currentTasks = []
 
     if name in [ "Jet", "FatJet" ]:
@@ -213,7 +207,7 @@ class JetAdder(object):
     # decide which jet collection we're dealing with
     jetLower = jet.lower()
     jetUpper = jet.upper()
-    tagName = "{}{}".format(jetUpper, postfix)
+    tagName = jetUpper
     jetInfo = JetInfo(jet, inputCollection)
 
     if inputCollection == "slimmedJets":
