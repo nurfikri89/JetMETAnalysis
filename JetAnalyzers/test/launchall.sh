@@ -9,10 +9,9 @@ CRAB_CFG=$CFG_BASE/crab_cfg.py
 
 export DATASET_PATTERN="^/(.*)/(.*)/[0-9A-Za-z]+$"
 
-JOB_VERSION_SUFFIX="JME2019Apr04"
+JOB_VERSION_SUFFIX="JME2019Apr05"
 GT=102X_upgrade2018_realistic_v15
-DRYRUN="--dryrun"
-#DRYRUN=""
+DRYRUN="" # use "--dryrun" while testing
 
 # generate cfg file for producing MINIAODSIM files from AODSIM
 cmsDriver.py step1 --fileout file:JME-RunIIAutumn18MiniAOD.root --mc --eventcontent MINIAODSIM --runUnscheduled \
@@ -48,7 +47,7 @@ done
 # submit NANOAODSIM jobs
 export INPUT_CFG=$CFG_NANOAOD
 export JOB_VERSION="Nano$JOB_VERSION_SUFFIX"
-export UNITS_PER_JOB=50000
+export UNITS_PER_JOB=20000
 cat $DATASET_NANOAOD | while read LINE; do
   export DATASET=$LINE
 
