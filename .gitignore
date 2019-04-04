@@ -6,4 +6,6 @@ __init__.py
 *.config
 *.files
 *.includes
+JetAnalyzers/test/cfg_mini.py
+JetAnalyzers/test/cfg_nano.py
 
