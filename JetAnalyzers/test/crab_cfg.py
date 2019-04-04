@@ -16,6 +16,7 @@ input_cfg       = get_env_var('INPUT_CFG')
 job_version     = get_env_var('JOB_VERSION')
 dataset_name    = get_env_var('DATASET')
 dataset_pattern = get_env_var('DATASET_PATTERN')
+units_per_job   = get_env_var('UNITS_PER_JOB')
 
 dataset_match   = re.match(dataset_pattern, dataset_name)
 if not dataset_match:
@@ -52,7 +53,7 @@ config.Site.storageSite = home_site
 config.Data.inputDataset     = dataset_name
 config.Data.inputDBS         = 'global'
 config.Data.splitting        = 'EventAwareLumiBased'
-config.Data.unitsPerJob      = 50000
+config.Data.unitsPerJob      = int(units_per_job)
 config.Data.outLFNDirBase    = '/store/user/%s/%s' % (getUsernameFromSiteDB(), job_version)
 config.Data.publication      = False
 config.Data.outputDatasetTag = outputDatasetTag

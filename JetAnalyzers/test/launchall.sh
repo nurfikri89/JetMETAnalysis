@@ -27,6 +27,7 @@ cmsDriver.py step1 --fileout tree.root --mc --eventcontent NANOAODSIM --datatier
 # submit MINIAODSIM jobs
 export INPUT_CFG=$CFG_MINIAOD
 export JOB_VERSION="Mini$JOB_VERSION_SUFFIX"
+export UNITS_PER_JOB=8000
 cat $DATASET_MINIAOD | while read LINE; do
   export DATASET=$LINE
 
@@ -47,6 +48,7 @@ done
 # submit NANOAODSIM jobs
 export INPUT_CFG=$CFG_NANOAOD
 export JOB_VERSION="Nano$JOB_VERSION_SUFFIX"
+export UNITS_PER_JOB=50000
 cat $DATASET_NANOAOD | while read LINE; do
   export DATASET=$LINE
 
@@ -55,7 +57,7 @@ cat $DATASET_NANOAOD | while read LINE; do
   fi
   DATASET_SPLIT=$(echo "$DATASET" | tr '/' ' ')
   DATASET_THIRD_PART=$(echo "$DATASET_SPLIT" | awk '{print $3}')
-  if [ "$DATASET_THIRD_PART" != "AODSIM" ]; then
+  if [ "$DATASET_THIRD_PART" != "MINIAODSIM" ]; then
     echo "Not an AODSIM file: $DATASET";
     exit 1;
   fi
