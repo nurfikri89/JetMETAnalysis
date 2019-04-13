@@ -5,7 +5,7 @@ import ast
 from JetMETAnalysis.JetAnalyzers.prepNanoAOD import getGenPartName, JetInfo
 
 ENV_NAME = 'JET_NTUPLE_FILLER'
-JEC_VER = 'Fall17_17Nov2017_V8_MC'
+JEC_VER = os.environ['JEC_VER']
 
 jetChoice = None
 if ENV_NAME in os.environ:

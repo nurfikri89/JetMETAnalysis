@@ -3,6 +3,7 @@
 # Make sure that your VOMS proxy is open!
 
 GT=94X_mc2017_realistic_v14
+export JEC_VER=Fall17_17Nov2017_V8_MC
 FILE=/store/mc/RunIIFall17DRPremix/QCD_Pt-15to7000_TuneCP5_Flat_13TeV_pythia8/AODSIM/94X_mc2017_realistic_v10-v1/50000/00304636-1BDB-E711-B6F3-FA163ECE02A9.root # 7k
 AOD="root://cms-xrd-global.cern.ch//$FILE"
 MINIAOD=JME-RunIIFall17MiniAOD.root
