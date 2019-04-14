@@ -140,7 +140,26 @@ exit $EXIT_CODE
 SUBMIT_TEMPLATE = """#!/bin/bash
 
 {% for input_file in makefile_map %}
-if [ ! -f {{ makefile_map[input_file]['output'] }} ]; then
+unset FILE_EXISTS
+if [ {{ makefile_map[input_file]['output'] }} =~ /hdfs ]; then
+  FILE_COUNT=$(hdfs dfs -ls {{ makefile_map[input_file]['output'] }} 2>/dev/null | grep {{ makefile_map[input_file]['output'] }} | wc -l)
+  if [ $FILE_COUNT -ne "0" ]; then
+    FILE_EXISTS=false;
+  else
+    FILE_EXISTS=true;
+  fi
+else
+  if [ ! -f {{ makefile_map[input_file]['output'] }} ]; then
+    FILE_EXISTS=false;
+  else
+    FILE_EXISTS=true;
+  fi
+fi
+if [ ! -z $FILE_EXISTS ]; then
+  echo "Internal error when checking if {{ makefile_map[input_file]['output'] }} exists";
+  exit 1;
+fi
+if [ $FILE_EXISTS = false ]; then
   sbatch --partition=main --output={{ makefile_map[input_file]['log'] }} --mem=1800M {{ makefile_map[input_file]['script'] }}
 fi
 {% endfor %}
