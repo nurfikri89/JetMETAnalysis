@@ -19,6 +19,7 @@
 # the script maintains one-to-one correspondence b/w input and output files (for now)
 
 from JetMETAnalysis.JetAnalyzers.prepNanoAOD import config_ext, getGenPartName, JetInfo
+from JetMETAnalysis.JetAnalyzers.Defaults_cff import jet_response_parameters
 
 import argparse
 import logging
@@ -125,8 +126,57 @@ if [[ $EXIT_CODE -ne 0 ]]; then
     return $EXIT_CODE;
 fi
 
+# sleep random number of seconds between 30 and 60 seconds to reduce potential failures due to HDFS libraries
+sleep $(python -c "import random; print(random.randint(30, 60))")
 echo "Copying {{ output_final }} to {{ output_remote }}"
 {{ cp_cmd }} {{ output_final }} {{ output_remote }}
+
+EXIT_CODE=$?
+
+if [[ $EXIT_CODE -ne 0 ]]; then
+    cleanup "$JOB_DIR";
+    return $EXIT_CODE;
+fi
+
+echo "Applying L1 corrections to {{ output_final }}"
+jet_apply_jec_x -input {{ output_final }} -era {{ jec_ver }} -levels 1 -output {{ output_response }} \
+  -jecpath $CMSSW_BASE/src/JetMETAnalysis/JetAnalyzers/data/JEC_{{ jec_ver }} -L1FastJet true -algs {{ algs }} \
+  &> {{ log_response }}
+
+EXIT_CODE=$?
+
+if [[ $EXIT_CODE -ne 0 ]]; then
+    cleanup "$JOB_DIR";
+    return $EXIT_CODE;
+fi
+
+# sleep random number of seconds between 30 and 60 seconds to reduce potential failures due to HDFS libraries
+sleep $(python -c "import random; print(random.randint(30, 60))")
+echo "Copying {{ output_response }} to {{ response_remote }}"
+{{ cp_cmd }} {{ output_response }} {{ response_remote }}
+
+EXIT_CODE=$?
+
+if [[ $EXIT_CODE -ne 0 ]]; then
+    cleanup "$JOB_DIR";
+    return $EXIT_CODE;
+fi
+
+echo "Analyzing response histograms from {{ output_response }}"
+jet_response_analyzer_x {{ response_cfg }} -input {{ output_response }} -output {{ output_analyzer }} -algs {{ algsl1 }} \
+  &> {{ log_analyzer }}
+
+EXIT_CODE=$?
+
+if [[ $EXIT_CODE -ne 0 ]]; then
+    cleanup "$JOB_DIR";
+    return $EXIT_CODE;
+fi
+
+# sleep random number of seconds between 30 and 60 seconds to reduce potential failures due to HDFS libraries
+sleep $(python -c "import random; print(random.randint(30, 60))")
+echo "Copying {{ output_analyzer }} to {{ analyzer_remote }}"
+{{ cp_cmd }} {{ output_analyzer }} {{ analyzer_remote }}
 
 EXIT_CODE=$?
 
@@ -262,31 +312,64 @@ def generate_cfg(input_file, scripts_dir, jec_ver, dR_match):
 
   return cfg_map
 
-def generate_script(cfg_map, input_file, output_dir, scripts_dir):
+def generate_script(cfg_map, input_file, output_dir, scripts_dir, jec_ver, response_cfg):
   cfg_remapped = {
     output_file : { 'cfg_file' : cfg_file, 'log_file' : cfg_file.replace('_cfg.py', '.log') }
     for output_file, cfg_file in cfg_map.items()
   }
   input_file_basename = os.path.basename(input_file)
   input_file_filename, input_file_ext = os.path.splitext(input_file_basename)
-  output_file = os.path.join(output_dir, input_file_basename)
-  if output_file.startswith('/hdfs'):
+  ntuple_dir = os.path.join(output_dir, 'ntuples')
+  create_if_not_exists(ntuple_dir)
+  output_file = os.path.join(ntuple_dir, input_file_basename)
+
+  cfg_base = input_file_filename.replace('tree', 'jnf')
+  cfg_dir_base = os.path.join(scripts_dir, cfg_base)
+
+  output_response = '{}_response{}'.format(input_file_filename, input_file_ext)
+  response_dir = os.path.join(output_dir, 'responses')
+  create_if_not_exists(response_dir)
+  response_remote = os.path.join(response_dir, output_response)
+  log_response = os.path.join(cfg_dir_base, output_response.replace(input_file_ext, '.log'))
+
+  output_analyzer = '{}_analyzed{}'.format(input_file_filename, input_file_ext)
+  analyzer_dir = os.path.join(output_dir, 'analyzed')
+  create_if_not_exists(analyzer_dir)
+  analyzer_remote = os.path.join(analyzer_dir, output_analyzer)
+  log_analyzer = os.path.join(cfg_dir_base, output_analyzer.replace(input_file_ext, '.log'))
+
+  if output_dir.startswith('/hdfs'):
     output_file_sub = re.sub('^/hdfs', '', output_file)
+    response_remote_sub = re.sub('^/hdfs', '', response_remote)
+    analyzer_remote_sub = re.sub('^/hdfs', '', analyzer_remote)
     cp_cmd = 'hdfs dfs -copyFromLocal'
   else:
     output_file_sub = output_file
+    response_remote_sub = response_remote
+    analyzer_remote_sub = analyzer_remote
     cp_cmd = 'cp'
 
+  algs = [ jetChoice['jet'] for jetChoice in config_ext ]
+  algsl1 = list(map(lambda alg: '{}l1'.format(alg), algs))
   shell_templated = jinja2.Template(SHELL_TEMPLATE).render(
-    job_dir       = os.path.join('/scratch', getpass.getuser(), 'jme_{}'.format(datetime.date.today().isoformat())),
-    cfg_map       = cfg_remapped,
-    output_final  = input_file_basename,
-    output_remote = output_file_sub,
-    cp_cmd        = cp_cmd,
+    job_dir         = os.path.join('/scratch', getpass.getuser(), 'jme_{}'.format(datetime.date.today().isoformat())),
+    cfg_map         = cfg_remapped,
+    output_final    = input_file_basename,
+    output_remote   = output_file_sub,
+    cp_cmd          = cp_cmd,
+    output_response = output_response,
+    jec_ver         = jec_ver,
+    algs            = ' '.join(algs),
+    log_response    = log_response,
+    response_remote = response_remote_sub,
+    response_cfg    = response_cfg,
+    output_analyzer = output_analyzer,
+    algsl1          = ' '.join(algsl1),
+    log_analyzer    = log_analyzer,
+    analyzer_remote = analyzer_remote_sub,
   )
 
-  cfg_base = input_file_filename.replace('tree', 'jnf')
-  shell_cfg_name = os.path.join(scripts_dir, cfg_base, 'batch_{}.sh'.format(input_file_filename))
+  shell_cfg_name = os.path.join(cfg_dir_base, 'batch_{}.sh'.format(input_file_filename))
   shell_cfg_dir = os.path.dirname(shell_cfg_name)
   create_if_not_exists(shell_cfg_dir)
 
@@ -296,7 +379,7 @@ def generate_script(cfg_map, input_file, output_dir, scripts_dir):
 
   add_chmodx(shell_cfg_name)
 
-  return shell_cfg_name, output_file
+  return shell_cfg_name, analyzer_remote
 
 def generate_makefile(makefile_map, scripts_dir):
   submit_templated = jinja2.Template(SUBMIT_TEMPLATE).render(makefile_map = makefile_map)
@@ -372,12 +455,17 @@ with open(input_fn, 'r') as input_f:
     if line_stripped:
       input_files.append(line_stripped)
 
+response_cfg_path = os.path.join(scripts_dir, 'cfg.txt')
+with open(response_cfg_path, 'w') as response_cfg:
+  response_cfg.write('binspt  = {}\n'.format(' '.join(list(map(str, list(jet_response_parameters.binspt))))))
+  response_cfg.write('binseta = {}\n'.format(' '.join(list(map(str, list(jet_response_parameters.binseta))))))
+
 logging.debug('Found {} input files; generating cfg files'.format(len(input_files)))
 makefile_map = {}
 for input_file in input_files:
   # keys = output files; values = cfg files
   cfg_map = generate_cfg(input_file, scripts_dir, jec, dR_match)
-  script_name, output_file = generate_script(cfg_map, input_file, output_dir, scripts_dir)
+  script_name, output_file = generate_script(cfg_map, input_file, output_dir, scripts_dir, jec, response_cfg_path)
   assert(input_file not in makefile_map)
   makefile_map[input_file] = {
     'output' : output_file,
