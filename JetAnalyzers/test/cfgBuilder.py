@@ -189,24 +189,29 @@ exit $EXIT_CODE
 
 SUBMIT_TEMPLATE = """#!/bin/bash
 
+unset JAVA_HOME
+
+HDFS_PREFIX=/hdfs
 {% for input_file in makefile_map %}
 unset FILE_EXISTS
-if [[ {{ makefile_map[input_file]['output'] }} =~ /hdfs ]]; then
-  FILE_COUNT=$(hdfs dfs -ls {{ makefile_map[input_file]['output'] }} 2>/dev/null | grep {{ makefile_map[input_file]['output'] }} | wc -l)
-  if [ $FILE_COUNT -ne "0" ]; then
+unset OUTPUT_FILE_HDFS
+OUTPUT_FILE="{{ makefile_map[input_file]['output'] }}"
+if [[ "$OUTPUT_FILE" =~ $HDFS_PREFIX ]]; then
+  OUTPUT_FILE_HDFS=${OUTPUT_FILE#$HDFS_PREFIX}
+  if [ $(hdfs dfs -ls $OUTPUT_FILE_HDFS 2>/dev/null | grep $OUTPUT_FILE_HDFS | wc -l) -ne 1 ]; then
     FILE_EXISTS=false;
   else
     FILE_EXISTS=true;
   fi
 else
-  if [ ! -f {{ makefile_map[input_file]['output'] }} ]; then
+  if [ ! -f $OUTPUT_FILE ]; then
     FILE_EXISTS=false;
   else
     FILE_EXISTS=true;
   fi
 fi
 if [ -z "$FILE_EXISTS" ]; then
-  echo "Internal error when checking if {{ makefile_map[input_file]['output'] }} exists";
+  echo "Internal error when checking if $OUTPUT_FILE exists";
   exit 1;
 fi
 if [ $FILE_EXISTS = false ]; then
