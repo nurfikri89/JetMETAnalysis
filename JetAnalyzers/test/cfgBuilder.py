@@ -129,6 +129,10 @@ echo "Copying {{ output_final }} to {{ output_remote }}"
 {{ cp_cmd }} {{ output_final }} {{ output_remote }}
 
 EXIT_CODE=$?
+
+sleep 20 # sleep 20 seconds to make sure that the file is physically copied to the new location
+cleanup "$JOB_DIR"
+
 echo "Final exit code is: $EXIT_CODE"
 exit $EXIT_CODE
 """
