@@ -55,7 +55,7 @@ process = cms.PSet(
     src_pThat       = cms.string('Generator_binvar'),
     src_pudensity   = cms.string('Pileup_pudensity'),
     src_gpudensity  = cms.string('Pileup_gpudensity'),
-    dR_match = cms.double(0.25),
+    dR_match = cms.double({{ dR_match }}),
     jetCorrectionLevels = cms.string(''),
     jecFilePath = cms.string('JetMETAnalysis/JetAnalyzers/data/JEC_{}/'.format('{{ jec_ver }}')),
     jecFileName_l1 = cms.string('{}_L1FastJet_{}.txt'.format('{{ jec_ver }}', '{{ jetCorrPayload }}')),
@@ -187,7 +187,7 @@ def create_if_not_exists(dir_name):
 def getFromJetChoice(jetChoice, key):
   return jetChoice[key] if key in jetChoice else ''
 
-def generate_cfg(input_file, scripts_dir, jec_ver):
+def generate_cfg(input_file, scripts_dir, jec_ver, dR_match):
   cfg_map = {}
   for jetChoice in config_ext:
     recJets = jetChoice['name']
@@ -227,6 +227,7 @@ def generate_cfg(input_file, scripts_dir, jec_ver):
       outputTree_flags = outputTree_flags,
       jetType          = jetType,
       isDebug          = False,
+      dR_match         = dR_match,
     )
     cfg_base = input_file_filename.replace('tree', 'jnf')
     cfg_filename = '{}_{}_cfg.py'.format(cfg_base, jetName)
@@ -317,6 +318,10 @@ parser.add_argument(
   help = 'R|Version of reapplied JEC',
 )
 parser.add_argument(
+  '-d', '--dr-match', dest = 'dR_match', metavar = 'float', required = False, type = float, default = 0.3,
+  help = 'R|Cone size in generator level matching',
+)
+parser.add_argument(
   '-v', '--verbose', dest = 'verbose', action = 'store_true', default = False,
   help = 'R|Enable verbose printout',
 )
@@ -326,6 +331,7 @@ input_fn = args.input
 output_dir = args.output
 scripts_dir = args.scripts
 jec = args.jec
+dR_match = args.dR_match
 verbose = args.verbose
 
 logging.basicConfig(
@@ -351,7 +357,7 @@ logging.debug('Found {} input files; generating cfg files'.format(len(input_file
 makefile_map = {}
 for input_file in input_files:
   # keys = output files; values = cfg files
-  cfg_map = generate_cfg(input_file, scripts_dir, jec)
+  cfg_map = generate_cfg(input_file, scripts_dir, jec, dR_match)
   script_name, output_file = generate_script(cfg_map, input_file, output_dir, scripts_dir)
   assert(input_file not in makefile_map)
   makefile_map[input_file] = {
