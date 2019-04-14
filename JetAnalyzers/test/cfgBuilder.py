@@ -74,6 +74,8 @@ SHELL_TEMPLATE="""#!/bin/bash
 unset JAVA_HOME
 
 JOB_DIR="{{ job_dir }}/$SLURM_JOBID"
+mkdir -p $JOB_DIR
+cd $JOB_DIR
 
 cleanup() {
     if [ ! -z "$1" ]; then
