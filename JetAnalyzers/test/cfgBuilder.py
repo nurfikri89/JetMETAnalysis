@@ -205,7 +205,7 @@ else
     FILE_EXISTS=true;
   fi
 fi
-if [ ! -z $FILE_EXISTS ]; then
+if [ -z "$FILE_EXISTS" ]; then
   echo "Internal error when checking if {{ makefile_map[input_file]['output'] }} exists";
   exit 1;
 fi
