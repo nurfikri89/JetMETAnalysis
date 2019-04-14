@@ -191,7 +191,7 @@ SUBMIT_TEMPLATE = """#!/bin/bash
 
 {% for input_file in makefile_map %}
 unset FILE_EXISTS
-if [ {{ makefile_map[input_file]['output'] }} =~ /hdfs ]; then
+if [[ {{ makefile_map[input_file]['output'] }} =~ /hdfs ]]; then
   FILE_COUNT=$(hdfs dfs -ls {{ makefile_map[input_file]['output'] }} 2>/dev/null | grep {{ makefile_map[input_file]['output'] }} | wc -l)
   if [ $FILE_COUNT -ne "0" ]; then
     FILE_EXISTS=false;
