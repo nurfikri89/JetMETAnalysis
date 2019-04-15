@@ -31,6 +31,8 @@ import datetime
 import stat
 import re
 
+SUPPORTED_ALGS = [ jetChoice['jet'] for jetChoice in config_ext ]
+
 CFG_TEMPLATE="""
 import FWCore.ParameterSet.Config as cms
 
@@ -164,7 +166,7 @@ fi
 
 echo "Analyzing response histograms from {{ output_response }}"
 jet_response_analyzer_x {{ response_cfg }} -input {{ output_response }} -output {{ output_analyzer }} -algs {{ algsl1 }} \
-  &> {{ log_analyzer }}
+  -drmax {{ dR_match }}  &> {{ log_analyzer }}
 
 EXIT_CODE=$?
 
@@ -317,7 +319,7 @@ def generate_cfg(input_file, scripts_dir, jec_ver, dR_match):
 
   return cfg_map
 
-def generate_script(cfg_map, input_file, output_dir, scripts_dir, jec_ver, response_cfg):
+def generate_script(cfg_map, input_file, output_dir, scripts_dir, jec_ver, response_cfg, dR_match, algs):
   cfg_remapped = {
     output_file : { 'cfg_file' : cfg_file, 'log_file' : cfg_file.replace('_cfg.py', '.log') }
     for output_file, cfg_file in cfg_map.items()
@@ -354,7 +356,6 @@ def generate_script(cfg_map, input_file, output_dir, scripts_dir, jec_ver, respo
     analyzer_remote_sub = analyzer_remote
     cp_cmd = 'cp'
 
-  algs = [ jetChoice['jet'] for jetChoice in config_ext ]
   algsl1 = list(map(lambda alg: '{}l1'.format(alg), algs))
   shell_templated = jinja2.Template(SHELL_TEMPLATE).render(
     job_dir         = os.path.join('/scratch', getpass.getuser(), 'jme_{}'.format(datetime.date.today().isoformat())),
@@ -372,6 +373,7 @@ def generate_script(cfg_map, input_file, output_dir, scripts_dir, jec_ver, respo
     algsl1          = ' '.join(algsl1),
     log_analyzer    = log_analyzer,
     analyzer_remote = analyzer_remote_sub,
+    dR_match        = dR_match,
   )
 
   shell_cfg_name = os.path.join(cfg_dir_base, 'batch_{}.sh'.format(input_file_filename))
@@ -429,6 +431,11 @@ parser.add_argument(
   help = 'R|Cone size in generator level matching',
 )
 parser.add_argument(
+  '-a', '--agls', dest = 'algs', metavar = 'algorithms', required = False, type = str, nargs = '+',
+  choices = SUPPORTED_ALGS, default = SUPPORTED_ALGS,
+  help = 'R|List of jet collections to analyze',
+)
+parser.add_argument(
   '-v', '--verbose', dest = 'verbose', action = 'store_true', default = False,
   help = 'R|Enable verbose printout',
 )
@@ -439,6 +446,7 @@ output_dir = args.output
 scripts_dir = args.scripts
 jec = args.jec
 dR_match = args.dR_match
+algs = args.algs
 verbose = args.verbose
 
 logging.basicConfig(
@@ -470,7 +478,9 @@ makefile_map = {}
 for input_file in input_files:
   # keys = output files; values = cfg files
   cfg_map = generate_cfg(input_file, scripts_dir, jec, dR_match)
-  script_name, output_file = generate_script(cfg_map, input_file, output_dir, scripts_dir, jec, response_cfg_path)
+  script_name, output_file = generate_script(
+    cfg_map, input_file, output_dir, scripts_dir, jec, response_cfg_path, dR_match, algs
+  )
   assert(input_file not in makefile_map)
   makefile_map[input_file] = {
     'output' : output_file,
