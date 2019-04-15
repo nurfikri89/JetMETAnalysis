@@ -191,32 +191,8 @@ exit $EXIT_CODE
 
 SUBMIT_TEMPLATE = """#!/bin/bash
 
-unset JAVA_HOME
-
-HDFS_PREFIX=/hdfs
 {% for input_file in makefile_map %}
-unset FILE_EXISTS
-unset OUTPUT_FILE_HDFS
-OUTPUT_FILE="{{ makefile_map[input_file]['output'] }}"
-if [[ "$OUTPUT_FILE" =~ $HDFS_PREFIX ]]; then
-  OUTPUT_FILE_HDFS=${OUTPUT_FILE#$HDFS_PREFIX}
-  if [ $(hdfs dfs -ls $OUTPUT_FILE_HDFS 2>/dev/null | grep $OUTPUT_FILE_HDFS | wc -l) -ne 1 ]; then
-    FILE_EXISTS=false;
-  else
-    FILE_EXISTS=true;
-  fi
-else
-  if [ ! -f $OUTPUT_FILE ]; then
-    FILE_EXISTS=false;
-  else
-    FILE_EXISTS=true;
-  fi
-fi
-if [ -z "$FILE_EXISTS" ]; then
-  echo "Internal error when checking if $OUTPUT_FILE exists";
-  exit 1;
-fi
-if [ $FILE_EXISTS = false ]; then
+if [ ! -f {{ makefile_map[input_file]['output'] }} ]; then
   sbatch --partition=main --output={{ makefile_map[input_file]['log'] }} --mem=1800M {{ makefile_map[input_file]['script'] }}
 fi
 {% endfor %}
