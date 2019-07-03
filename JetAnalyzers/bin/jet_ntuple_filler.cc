@@ -1,18 +1,17 @@
-
 /** \executable jet_ntuple_filler
- *
- * Produce plain ROOT Ntuple in format expected by 'jet_response_analyzer_x',
- * using nanoAOD Ntuple as input.
- *
- * \authors Christian Veelken, Tallinn;
- *          Karl Ehataht, Tallinn
- *
- */
-
+*
+* Produce plain ROOT Ntuple in format expected by 'jet_response_analyzer_x',
+* using nanoAOD Ntuple as input.
+*
+* \authors Christian Veelken, Tallinn;
+*          Karl Ehataht, Tallinn
+*
+*/
 #include "FWCore/ParameterSet/interface/ParameterSet.h" // edm::ParameterSet
 #include "FWCore/PythonParameterSet/interface/MakeParameterSets.h" // edm::readPSetsFrom() 
 #include "FWCore/Utilities/interface/Exception.h" // cms::Exception
 #include "PhysicsTools/FWLite/interface/TFileService.h" // fwlite::TFileService
+#include "PhysicsTools/FWLite/interface/CommandLineParser.h"// optutl::CommandLineParser
 #include "DataFormats/FWLite/interface/InputSource.h" // fwlite::InputSource
 #include "DataFormats/FWLite/interface/OutputFiles.h" // fwlite::OutputFiles
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h" // JetCorrectorParameters
@@ -60,26 +59,51 @@ void fillBranch(std::vector<T1>* branch, const T2& value)
 
 int main(int argc, char* argv[])
 {
-//--- throw an exception in case ROOT encounters an error
+  std::cout << "========================================" << std::endl;
+  std::cout << "Begin jet_ntuple_filler                 " << std::endl;
+  std::cout << "========================================" << std::endl;
+  
+  //--- throw an exception in case ROOT encounters an error
   gErrorAbortLevel = kError;
-
-//--- parse command-line arguments
-  if ( argc < 2 ) {
-    std::cout << "Usage: " << argv[0] << " [parameters.py]" << std::endl;
-    return EXIT_FAILURE;
-  }
 
   std::cout << "<jet_ntuple_filler>:" << std::endl;
 
-//--- keep track of time it takes the macro to execute
+  //--- keep track of time it takes the macro to execute
   TBenchmark clock;
   clock.Start("jet_ntuple_filler");
 
-//--- read python configuration parameters
-  if ( !edm::readPSetsFrom(argv[1])->existsAs<edm::ParameterSet>("process") )
+  //=================================
+  //
+  // Parse Command Line Arguments
+  //
+  //=================================
+  // if ( argc < 2 ) {
+  //   std::cout << "Usage: " << argv[0] << " [parameters.py]" << std::endl;
+  //   return EXIT_FAILURE;
+  // }
+
+  // Initialize command line parser
+  optutl::CommandLineParser parser ("jet_ntuple_filler");
+  // Add extra options
+  parser.addOption("cfg",  optutl::VariableMapCont::OptionType::kString, "config file", "test.py");
+  // Parse arguments
+  parser.parseArguments (argc, argv);
+  std::string                           cfg_        = parser.stringValue("cfg");
+  std::vector<std::string> inputFilesFromCL_        = parser.stringVector("inputFiles");
+  std::string                 outFileFromCL_        = parser.stringValue("outputFile");
+  std::string                 outFileTag            = parser.stringValue("tag");
+  parser._finishDefaultOptions();
+  std::string                 outFileFromCLWithTag_ = parser.stringValue("outputFile");
+
+  //==========================================
+  //
+  // Read python configuration parameters
+  //
+  //===========================================
+  if ( !edm::readPSetsFrom(argv[1])->existsAs<edm::ParameterSet>("process") ){
     throw cms::Exception("jet_ntuple_filler")
       << "No ParameterSet 'process' found in configuration file = " << argv[1] << " !!\n";
-
+  }
   edm::ParameterSet cfg = edm::readPSetsFrom(argv[1])->getParameter<edm::ParameterSet>("process");
 
   edm::ParameterSet cfg_jet_ntuple_filler = cfg.getParameter<edm::ParameterSet>("jet_ntuple_filler");
@@ -100,11 +124,20 @@ int main(int argc, char* argv[])
 
   double dR_match = cfg_jet_ntuple_filler.getParameter<double>("dR_match");
 
+  const unsigned jetType = cfg_jet_ntuple_filler.getParameter<unsigned>("jetType");
+  bool isDEBUG = cfg_jet_ntuple_filler.getParameter<bool>("isDEBUG");
+
+  //=======================================
+  //
+  // Initialize FactorizedJetCorrector
+  //
+  //=======================================
   std::string jetCorrectionLevels = cfg_jet_ntuple_filler.getParameter<std::string>("jetCorrectionLevels");
   std::string jecFilePath = cfg_jet_ntuple_filler.getParameter<std::string>("jecFilePath");
   std::string jecFileName_l1 = cfg_jet_ntuple_filler.getParameter<std::string>("jecFileName_l1");
   std::string jecFileName_l2 = cfg_jet_ntuple_filler.getParameter<std::string>("jecFileName_l2");
   std::string jecFileName_l3 = cfg_jet_ntuple_filler.getParameter<std::string>("jecFileName_l3");
+
   FactorizedJetCorrector* jetCorrector = nullptr;
   if ( jetCorrectionLevels != "" ) {
     std::vector<JetCorrectorParameters> jetCorrParams;
@@ -123,34 +156,73 @@ int main(int argc, char* argv[])
     jetCorrector = new FactorizedJetCorrector(jetCorrParams);
   }
 
-  const unsigned jetType = cfg_jet_ntuple_filler.getParameter<unsigned>("jetType");
-  bool isDEBUG = cfg_jet_ntuple_filler.getParameter<bool>("isDEBUG");
-
+  //==================================
+  //
+  // Initialize Input Files and TTree
+  //
+  //==================================
+  //
+  // Get input files information from python config
+  //
   fwlite::InputSource inputFiles(cfg);
   int maxEvents = inputFiles.maxEvents();
-  std::cout << " maxEvents = " << maxEvents << std::endl;
+  std::cout << "maxEvents = " << maxEvents << std::endl;
   unsigned reportEvery = inputFiles.reportAfter();
+  std::cout << "reportEvery = " << reportEvery << std::endl;
+  
+  TTreeWrapper * inputTree = nullptr;
+  //
+  // Check if input files are specified through the command line.
+  // Use them if we specify them.
+  //
+  if(inputFilesFromCL_.size() > 0){
+    std::cout << "========================================" << std::endl;
+    std::cout << "List of input files from command line   " << std::endl;
+    std::cout << "========================================" << std::endl;
+    inputTree = new TTreeWrapper(inputTreeName.data(), inputFilesFromCL_, maxEvents);
+  }
+  //
+  // If not, use input files information provided in python config
+  //
+  else if (inputFiles.files().size() > 0){
+    std::cout << "========================================" << std::endl;
+    std::cout << "List of input files from config file    " << std::endl;
+    std::cout << "========================================" << std::endl;
+    inputTree = new TTreeWrapper(inputTreeName.data(), inputFiles.files(), maxEvents);
+  }
+  else{
+      throw cms::Exception("jet_ntuple_filler")
+        << "No input files specified from the command line or in the config file" << " !!\n";
+  }
+  std::cout << "Loaded " << inputTree -> getFileCount() << " file(s)." << std::endl;
 
+  //================================
+  //
+  // Initialize Output File 
+  //
+  //================================
   fwlite::OutputFiles outputFile(cfg);
-  fwlite::TFileService fs = fwlite::TFileService(outputFile.file().data());
+  std::string outputFileFinal = "";
+  if(outFileFromCL_ != ""){
+    std::cout << "============================================" << std::endl;
+    std::cout << "Output file path and name from command line " << std::endl;
+    std::cout << "============================================" << std::endl;
+    std::cout << "OutFile = " << outFileFromCLWithTag_ << std::endl;
+    outputFileFinal = outFileFromCLWithTag_;
+  }else{
+    std::cout << "============================================" << std::endl;
+    std::cout << "Output file path and name from config file  " << std::endl;
+    std::cout << "============================================" << std::endl;
+    std::cout << "OutFile = " << outputFile.file() << std::endl;
+    outputFileFinal = outputFile.file();
+  }
+  fwlite::TFileService fs = fwlite::TFileService(outputFileFinal.data());
 
-  TTreeWrapper * inputTree = new TTreeWrapper(inputTreeName.data(), inputFiles.files(), maxEvents);
-
-  std::cout << "Loaded " << inputTree -> getFileCount() << " file(s).\n";
-
-  EventInfoReader* evtInfoReader = new EventInfoReader(
-    src_numPU, src_numPU_true, src_numVertices, src_vertexZ, src_rho,
-    src_weight, src_pThat, src_pudensity, src_gpudensity);
-  inputTree->registerReader(evtInfoReader);
-
-  RecoJetReader* recJetReader = new RecoJetReader(src_recJets, jetType);
-  inputTree->registerReader(recJetReader);
-
-  GenJetReader* genJetReader = new GenJetReader(src_genJets);
-  inputTree->registerReader(genJetReader);
-
-  JetCollectionGenMatcher jetGenMatcher;
-
+  //================================
+  //
+  // Initialize Output TTree
+  //
+  //================================
   std::string outputTreeName = cfg_jet_ntuple_filler.getParameter<std::string>("outputTreeName");
   TDirectory * dir = fs.getBareDirectory();
   if(outputTreeName.find('/') != std::string::npos)
@@ -176,8 +248,41 @@ int main(int argc, char* argv[])
   }
   dir->cd();
   TTree* outputTree = new TTree(outputTreeName.data(), outputTreeName.data());
+
+  //================================
+  //
+  // Setup Readers 
+  //
+  //================================
+  EventInfoReader* evtInfoReader = new EventInfoReader(
+    src_numPU, src_numPU_true, src_numVertices, src_vertexZ, src_rho,
+    src_weight, src_pThat, src_pudensity, src_gpudensity);
+  inputTree->registerReader(evtInfoReader);
+
+  RecoJetReader* recJetReader = new RecoJetReader(src_recJets, jetType);
+  inputTree->registerReader(recJetReader);
+
+  GenJetReader* genJetReader = new GenJetReader(src_genJets);
+  inputTree->registerReader(genJetReader);
+
+  JetCollectionGenMatcher jetGenMatcher;
+
+  //================================
+  //
+  // Setup JRAEvent
+  //
+  //================================
   std::bitset<8> outputTree_flags = cfg_jet_ntuple_filler.getParameter<unsigned>("outputTree_flags");
   JRAEvent* outputTree_event = new JRAEvent(outputTree, outputTree_flags);
+
+  //================================
+  //
+  // Event Loop
+  //
+  //================================
+  std::cout << "========================================" << std::endl;
+  std::cout << "Begin Event Loop                        " << std::endl;
+  std::cout << "========================================" << std::endl;
 
   int analyzedEvents = 0;
   double analyzedEvents_weighted = 0;
@@ -195,13 +300,22 @@ int main(int argc, char* argv[])
     }
     ++analyzedEvents;
     analyzedEvents_weighted += evtInfo.weight();
-
+    //
+    // Get the recojets and genjets
+    //
     std::vector<RecoJet> recJets = recJetReader->read();
     std::vector<GenJet> genJets = genJetReader->read();
+    //
+    // Match the recojets and genjets
+    //
     jetGenMatcher.addGenJetMatch(recJets, genJets, dR_match);
-
+    //
+    // Reset variables in output tree
+    //
     outputTree_event->clear();
-
+    //
+    // Store event level
+    //
     outputTree_event->npus->push_back(evtInfo.numPU());
     outputTree_event->tnpus->push_back(evtInfo.numPU_true());
     outputTree_event->bxns->push_back(0);
@@ -221,6 +335,13 @@ int main(int argc, char* argv[])
     outputTree_event->gpudensity = evtInfo.gpudensity();
     outputTree_event->refdzvtx->push_back(0);
 
+
+    //======================================
+    // Reco Jet Loop
+    // Save recojets that are paired with 
+    // genjets
+    //
+    //======================================
     int numRecJets_selected = 0;
     for ( std::vector<RecoJet>::const_iterator recJet = recJets.begin();
           recJet != recJets.end(); ++recJet ) {
@@ -296,6 +417,9 @@ int main(int argc, char* argv[])
     selectedJets_weighted += (numRecJets_selected*evtInfo.weight());
   }
 
+  std::cout << "========================================" << std::endl;
+  std::cout << "End Event Loop                          " << std::endl;
+  std::cout << "========================================" << std::endl;
   std::cout << "max num. Entries = " << inputTree->getCumulativeMaxEventCount()
             << " (limited by " << maxEvents << ") processed in "
             << inputTree->getProcessedFileCount() << " file(s) (out of "
@@ -311,6 +435,9 @@ int main(int argc, char* argv[])
   delete inputTree;
 
   clock.Show("jet_ntuple_filler");
+  std::cout << "========================================" << std::endl;
+  std::cout << "End jet_ntuple_filler                   " << std::endl;
+  std::cout << "========================================" << std::endl;
 
   return EXIT_SUCCESS;
 }
