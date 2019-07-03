@@ -1,6 +1,11 @@
 <use   name="JetMETAnalysis/JetUtilities"/>
 <use   name="CondFormats/JetMETObjects"/>
+<use   name="DataFormats/FWLite"/>
+<use   name="DataFormats/Math"/>
+<use   name="PhysicsTools/FWLite"/>
 <use   name="PhysicsTools/Utilities"/>
+<use   name="FWCore/ParameterSet"/>
+<use   name="FWCore/PythonParameterSet"/>
 <use   name="FWCore/FWLite"/>
 <use   name="rootphysics"/>
 <use   name="rootspectrum"/>
@@ -49,3 +54,4 @@
 <!--<bin   name="JRAtoPUNtuple_x"                  file="JRAtoPUNtuple_x.cc" />-->
 <bin   name="compareJEC"                       file="compareJEC.C" />
 <bin   name="jet_add_pudensity_x"              file="jet_add_pudensity_x.cc"/>
+<bin   name="jet_ntuple_filler"                file="jet_ntuple_filler.cc"/>
