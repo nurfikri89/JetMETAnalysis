@@ -19,7 +19,6 @@ GenJetReader::GenJetReader(const std::string & branchName_obj,
   , jet_eta_(nullptr)
   , jet_phi_(nullptr)
   , jet_mass_(nullptr)
-  , jet_area_(nullptr)
   , jet_partonFlavour_(nullptr)
   , jet_hadronFlavour_(nullptr)
 {
@@ -38,7 +37,6 @@ GenJetReader::~GenJetReader()
     delete[] gInstance->jet_eta_;
     delete[] gInstance->jet_phi_;
     delete[] gInstance->jet_mass_;
-    delete[] gInstance->jet_area_;
     delete[] gInstance->jet_partonFlavour_;
     delete[] gInstance->jet_hadronFlavour_;
     instances_[branchName_obj_] = nullptr;
@@ -54,7 +52,6 @@ GenJetReader::setBranchNames()
     branchName_eta_ = Form("%s_%s", branchName_obj_.data(), "eta");
     branchName_phi_ = Form("%s_%s", branchName_obj_.data(), "phi");
     branchName_mass_ = Form("%s_%s", branchName_obj_.data(), "mass");
-    branchName_area_ = Form("%s_%s", branchName_obj_.data(), "area");
     branchName_partonFlavour_ = Form("%s_%s", branchName_obj_.data(), "partonFlavour");
     branchName_hadronFlavour_ = Form("%s_%s", branchName_obj_.data(), "hadronFlavour");
     instances_[branchName_obj_] = this;
@@ -84,7 +81,6 @@ GenJetReader::setBranchAddresses(TTree * tree)
     bai.setBranchAddress(jet_eta_, branchName_eta_);
     bai.setBranchAddress(jet_phi_, branchName_phi_);
     bai.setBranchAddress(jet_mass_, branchName_mass_);
-    bai.setBranchAddress(jet_area_, branchName_area_);
     bai.setBranchAddress(jet_partonFlavour_, branchName_partonFlavour_);
     bai.setBranchAddress(jet_hadronFlavour_, branchName_hadronFlavour_);
   }
@@ -108,15 +104,16 @@ std::vector<GenJet> GenJetReader::read() const
     jets.reserve(nJets);
     for(UInt_t idxJet = 0; idxJet < nJets; ++idxJet)
     {
-      jets.push_back({
-	{
+      jets.push_back(
+      {
+        {
           gInstance->jet_pt_[idxJet],
           gInstance->jet_eta_[idxJet],
           gInstance->jet_phi_[idxJet],
           gInstance->jet_mass_[idxJet],
-          gInstance->jet_area_[idxJet],
+          0.0,// Jet Area: Not included in JMEnano since its always 0. Set 0 here also.
         },
-	gInstance->jet_partonFlavour_[idxJet],
+        gInstance->jet_partonFlavour_[idxJet],
         gInstance->jet_hadronFlavour_[idxJet]
       });
     }
