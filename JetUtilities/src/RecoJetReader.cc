@@ -80,8 +80,8 @@ RecoJetReader::setBranchNames()
     branchName_chEmEF_ = Form("%s_%s", branchName_obj_.data(), "chEmEF");
     branchName_neEmEF_ = Form("%s_%s", branchName_obj_.data(), "neEmEF");
     branchName_muEF_ = Form("%s_%s", branchName_obj_.data(), "muEF");
-    branchName_hfEF_ = Form("%s_%s", branchName_obj_.data(), "HFHEF");
-    branchName_hfmEF_ = Form("%s_%s", branchName_obj_.data(), "HFEMEF");
+    branchName_hfEF_ = Form("%s_%s", branchName_obj_.data(), "hfHEF");
+    branchName_hfmEF_ = Form("%s_%s", branchName_obj_.data(), "hfEmEF");
     branchName_emf_ = Form("%s_%s", branchName_obj_.data(), "emf");
     branchName_jetId_ = Form("%s_%s", branchName_obj_.data(), "jetId");
     instances_[branchName_obj_] = this;
